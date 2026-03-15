@@ -9,7 +9,7 @@ Search for this, and you will find!
 
 ## FieldDataCollection_RoadSegments_DEMImport
 
-![main laps picture](./Images/RaceTrack.jpg)
+![main laps picture](./Images/testTrackDEM_Intensity.png)
 
 The purpose of this code is to support the import of Digital Elevation Maps (DEMs). Typically, these are obtained from the PASDA website at: 
 

@@ -182,7 +182,7 @@ NorthSouthDataset = {'North', 'South'};
 yearsToCheck = {'2006','2007','2008'};
 PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/';
 rootOfLargeDataPath = fullfile(pwd,'LargeData','DEMsForPA');
-for jth_direction = 1:2
+for jth_direction = 1:1 %2
 	thisDirection = NorthSouthDataset{jth_direction};
 
 	for kth_year = 1:length(yearsToCheck)
