@@ -1,7 +1,9 @@
 
 %% Introduction to and Purpose of the Code
 % This is the explanation of the code that can be found by running
+%
 %       script_demo_DEMImport.m
+%
 % This is a script to demonstrate the functions within the DEMImport code
 % library. This code repo is typically located at:
 %

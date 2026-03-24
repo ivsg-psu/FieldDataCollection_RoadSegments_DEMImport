@@ -1,11 +1,11 @@
 
 
 
-%%
-
+%% Load the file
+DEM_TIFF_filename = fullfile(pwd,'Data','25001900PAN_dem','25001900PAN_dem.tif');
 
 % Read DEM (GeoTIFF)
-[Z, Rmap] = readgeoraster('25001900PAN_dem.tif');   % Z = elevation matrix, R = geographicRasterReference
+[Z, Rmap] = readgeoraster(DEM_TIFF_filename);   % Z = elevation matrix, R = geographicRasterReference
 Z = double(Z);                           % ensure numeric
 
 if isfield(Rmap,'MissingDataIndicator')
@@ -44,43 +44,12 @@ end
 % projCRS = Rmap.ProjectedCRS;
 % [latGrid, lonGrid] = projinv(projCRS, xWorld, yWorld);   % lat, lon in degrees
 
-DEM_XML_fileName = fullfile(pwd,'LargeData','PA_DEMs','25001900PAN_dem','25001900PAN_dem.tif.xml');
-stringArrayOfDEMXMLfile = readlines(DEM_XML_fileName);
+DEM_XML_fileName = cat(2,DEM_TIFF_filename,'.xml');
 
-%%%%%%%%%%%%%
-% THE TYPICAL STRUCTURE:
-% <spdom>
-%   <bounding>
-%     <westbc Sync="TRUE">-77.997606</westbc>
-%     <eastbc Sync="TRUE">-77.961371</eastbc>
-%     <northbc Sync="TRUE">40.852624</northbc>
-%     <southbc Sync="TRUE">40.825105</southbc>
-%   </bounding>
-%   <lboundng>
-%     <leftbc Sync="TRUE">1900000.000000</leftbc>
-%     <rightbc Sync="TRUE">1910000.000000</rightbc>
-%     <bottombc Sync="TRUE">240000.000000</bottombc>
-%     <topbc Sync="TRUE">250000.000000</topbc>
-%   </lboundng>
-% </spdom>
+URHERE
 
-boundingDirections = {'west','east','north','south'};
-LL_west_east_north_south = nan(4,1);
-for ith_direction = 1:length(boundingDirections)
-    thisDirectionString = boundingDirections{ith_direction};
-    startString = sprintf('<%sbc Sync="TRUE">',thisDirectionString);
-    endString = sprintf('</%sbc>',thisDirectionString);
-    thisbcLine = find(contains(stringArrayOfDEMXMLfile,startString));
-    thisCharacters = extractBetween(stringArrayOfDEMXMLfile(thisbcLine),startString,endString);
-    LL_west_east_north_south(ith_direction) = str2double(thisCharacters);
-end
+%%%%%%%%%%%%%%%%
 
-
-% Determine geographic limits (cell-centered limits)
-% latlim = [min(latGrid(:)), max(latGrid(:))];
-% lonlim = [min(lonGrid(:)), max(lonGrid(:))];
-latlim = [LL_west_east_north_south(4), LL_west_east_north_south(3)];
-lonlim = [LL_west_east_north_south(1), LL_west_east_north_south(2)];
 
 % Create GeographicCellsReference matching raster size and orientation.
 % Preserve ColumnsStartFrom and RowsStartFrom from original if relevant.
@@ -107,7 +76,7 @@ ZG   = Z(1:k:end, 1:k:end);
 
 % 3D surface plot
 figure
-surf(lonG, latG, ZG, ZG, "EdgeColor","none")   % color by elevation
+surf(lonG, fliplr(latG), ZG, ZG, "EdgeColor","none")   % color by elevation
 
 % axis equal
 xlabel("Longitude"); ylabel("Latitude"); zlabel("Elevation (m)")
