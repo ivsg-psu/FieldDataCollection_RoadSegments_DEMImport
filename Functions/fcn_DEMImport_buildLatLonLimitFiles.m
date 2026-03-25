@@ -162,6 +162,7 @@ filesAndFoldersInThisFolder = dir(rootPathName);
 fprintf(1,'In folder: %s\n',rootPathName)
 
 rejectNames = {'.','..'};
+noContainNames = {'LAS'};
 
 % Check for subdirectories
 subfoldersInThisFolder = filesAndFoldersInThisFolder([filesAndFoldersInThisFolder.isdir]);
@@ -178,8 +179,9 @@ end
 
 for ith_folder = 1:length(subfoldersInThisFolder)
     thisFolderName = subfoldersInThisFolder(ith_folder).name;
-    if ~any(strcmp(rejectNames,thisFolderName))
-        subfolderPath = fullfile(rootPathName,thisFolderName);
+	subfolderPath = fullfile(rootPathName,thisFolderName);
+    if ~any(strcmp(rejectNames,thisFolderName)) && ~any(contains(subfolderPath,noContainNames),'all')
+
         [thisLatLonLimit,thisZipPath] = fcn_DEMImport_buildLatLonLimitFiles(subfolderPath, flagIgnoreLoadFiles, figNum);
 
 		[LatLonLimits, zipPaths] = fcn_INTERNAL_conditionallyAdd(LatLonLimits, zipPaths,thisLatLonLimit, thisZipPath);
