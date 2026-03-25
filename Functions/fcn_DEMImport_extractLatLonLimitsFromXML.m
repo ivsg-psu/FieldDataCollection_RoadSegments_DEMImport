@@ -157,6 +157,17 @@ end
 stringArrayOfDEMXMLfile = readlines(XMLfileName);
 
 %%%%%%%%%%%%%
+% For: dem.tif.xml tiles
+% THE TYPICAL STRUCTURE:
+% <geoBox esriExtentType="decdegrees">
+%   <westBL Sync="TRUE">-77.563532</westBL>
+%   <eastBL Sync="TRUE">-77.527231</eastBL>
+%   <northBL Sync="TRUE">40.989901</northBL>
+%   <southBL Sync="TRUE">40.96239</southBL>
+%   <exTypeCode Sync="TRUE">1</exTypeCode>
+% </geoBox>
+%
+% For: _bl.shp.xlm files
 % THE TYPICAL STRUCTURE:
 % <spdom>
 %   <bounding>
@@ -172,21 +183,85 @@ stringArrayOfDEMXMLfile = readlines(XMLfileName);
 %     <topbc Sync="TRUE">250000.000000</topbc>
 %   </lboundng>
 % </spdom>
+% OR
+% <geoBox esriExtentType="decdegrees">
+%   <westBL Sync="TRUE">-77.383416</westBL>
+%   <eastBL Sync="TRUE">-77.347132</eastBL>
+%   <northBL Sync="TRUE">40.824783</northBL>
+%   <southBL Sync="TRUE">40.797215</southBL>
+%   <exTypeCode Sync="TRUE">1</exTypeCode>
+% </geoBox>
 
+NlinesOfStrings = size(stringArrayOfDEMXMLfile,1);
+
+
+startOfSegmentString{1} = '<geoBox esriExtentType="decdegrees">';
+modifierString{1} = 'BL';
+startOfSegmentString{2} = '<bounding>';
+modifierString{2} = 'bc';
 boundingDirections = {'west','east','north','south'};
+
+flagWasFound = false;
+for ith_method = 1:length(startOfSegmentString)
+	if ~flagWasFound
+		thisStartOfSegmentString = startOfSegmentString{ith_method};
+
+		foundStartOfSegmentStringIndex = contains(stringArrayOfDEMXMLfile,thisStartOfSegmentString);
+		if any(foundStartOfSegmentStringIndex)
+			% Start string was found
+
+			% Tag all values after start string
+			flagIsAfterStartOfSegment = false(NlinesOfStrings,1);
+			startOfSegmentStringIndex = find(foundStartOfSegmentStringIndex);
+			if length(startOfSegmentStringIndex)>1
+				error('More than one start segment string found - exiting');
+			end
+			flagIsAfterStartOfSegment(startOfSegmentStringIndex:end,1) = true;
+			
+			thisDirectionString = boundingDirections{1};
+			startString = sprintf('<%s%s Sync="TRUE">',thisDirectionString, modifierString{ith_method});
+			startStringFound = contains(stringArrayOfDEMXMLfile,startString);
+			thisbcLine = startStringFound & flagIsAfterStartOfSegment;
+			if any(thisbcLine)
+				if sum(thisbcLine)>1
+					error('More than one possible start string entry found. Exiting');
+				end
+				flagWasFound = true;
+				goodMethod = ith_method;
+			end
+
+		end
+	end
+end
+
+if ~flagWasFound
+	warning('Unknown XML type detected. Not configured yet for processing. Filename: \n\t%s',XMLfileName);
+	LatLonLimits = [nan nan nan nan];
+	return;
+end
+
+
+
+
+
 LL_west_east_north_south = nan(4,1);
 for ith_direction = 1:length(boundingDirections)
     thisDirectionString = boundingDirections{ith_direction};
-    startString = sprintf('<%sbc Sync="TRUE">',thisDirectionString);
-    endString = sprintf('</%sbc>',thisDirectionString);
-    thisbcLine = contains(stringArrayOfDEMXMLfile,startString);
+    startString = sprintf('<%s%s Sync="TRUE">',thisDirectionString, modifierString{goodMethod});
+	startStringFound = contains(stringArrayOfDEMXMLfile,startString);
+    thisbcLine = startStringFound & flagIsAfterStartOfSegment;
     if ~any(thisbcLine)
         error('The start string: %s was not found anywhere in the XML file');
+	else
+		if sum(thisbcLine)>1
+			error('More than one possible start string entry found. Exiting');
+		end
     end
 
     thisLineOfCharacters = stringArrayOfDEMXMLfile(thisbcLine);
 
     % Look for the matching characters in this line of text
+    endString = sprintf('</%s%s>',thisDirectionString, modifierString{goodMethod});
     thisCharacters = extractBetween(thisLineOfCharacters,startString,endString);
     if isempty(thisCharacters)
         error('Unable to find matching characters. Exiting');

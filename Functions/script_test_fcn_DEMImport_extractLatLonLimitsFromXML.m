@@ -38,10 +38,9 @@ fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 figNum = 10001;
 titleString = sprintf('DEMO case: simple demo of extracting limits');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
-% figure(figNum); clf;
+figure(figNum); clf;
 
-DEM_TIFF_filename = fullfile(pwd,'Data','25001900PAN_dem','25001900PAN_dem.tif');
-XMLfileName = cat(2,DEM_TIFF_filename,'.xml');
+XMLfileName = fullfile(pwd,'Data','20001900PAN_bl.shp.xml');
 
 % Call the function
 LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName,(figNum));
@@ -56,11 +55,37 @@ assert(isnumeric(LatLonLimits));
 assert(isequal(size(LatLonLimits),[1 4]));
 
 % Check variable values
-assert(isequal(round(LatLonLimits,4),[40.8251   40.8526  -77.9976  -77.9614]));
+assert(isequal(round(LatLonLimits,4),[40.6879   40.7154  -77.9971  -77.9609]));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
 
+
+%% DEMO case: load entire PAMAP database
+figNum = 10002;
+titleString = sprintf('DEMO case: simple demo of extracting limits');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+% figure(figNum); clf;
+
+XMLfileName = fullfile(pwd,'Data','30002020PAN_dem.tif.xml');
+
+% Call the function
+LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName,(figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(LatLonLimits));
+
+
+% Check variable sizes
+assert(isequal(size(LatLonLimits),[1 4]));
+
+% Check variable values
+assert(isequal(round(LatLonLimits,4),[40.9624   40.9899  -77.5635  -77.5272]));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
 
 
 %% Test cases start here. These are very simple, usually trivial
@@ -82,13 +107,59 @@ assert(isequal(get(gcf,'Number'),figNum));
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-%% TEST case: This one returns nothing since there is no portion of the path in criteria
+%% TEST case: Weird case 1
 figNum = 20001;
-titleString = sprintf('TEST case: This one returns nothing since there is no portion of the path in criteria');
+titleString = sprintf('TEST case: Weird case 1');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
 
+XMLfileName = fullfile(pwd,'Data','24002070PAN_bl.shp.xml');
+
+% Call the function
+LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName,(figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(LatLonLimits));
+
+
+% Check variable sizes
+assert(isequal(size(LatLonLimits),[1 4]));
+
+% Check variable values
+% assert(isequal(round(LatLonLimits,4),[40.8251   40.8526  -77.9976  -77.9614]));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%% TEST case: Weird case 2
+figNum = 20002;
+titleString = sprintf('TEST case: Weird case 2');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+
+XMLfileName = fullfile(pwd,'Data','29002100PAN_bl.shp.xml');
+
+% Call the function
+LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName,(figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(LatLonLimits));
+
+
+% Check variable sizes
+assert(isequal(size(LatLonLimits),[1 4]));
+
+% Check variable values
+% assert(isequal(round(LatLonLimits,4),[40.8251   40.8526  -77.9976  -77.9614]));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -113,8 +184,7 @@ figNum = 80001;
 fprintf(1,'Figure: %.0f: FAST mode, empty figNum\n',figNum);
 figure(figNum); close(figNum);
 
-DEM_TIFF_filename = fullfile(pwd,'Data','25001900PAN_dem','25001900PAN_dem.tif');
-XMLfileName = cat(2,DEM_TIFF_filename,'.xml');
+XMLfileName = fullfile(pwd,'Data','20001900PAN_bl.shp.xml');
 
 % Call the function
 LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName,([]));
@@ -126,7 +196,7 @@ assert(isnumeric(LatLonLimits));
 assert(isequal(size(LatLonLimits),[1 4]));
 
 % Check variable values
-assert(isequal(round(LatLonLimits,4),[40.8251   40.8526  -77.9976  -77.9614]));
+assert(isequal(round(LatLonLimits,4),[40.6879   40.7154  -77.9971  -77.9609]));
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -138,8 +208,7 @@ figNum = 80002;
 fprintf(1,'Figure: %.0f: FAST mode, figNum=-1\n',figNum);
 figure(figNum); close(figNum);
 
-DEM_TIFF_filename = fullfile(pwd,'Data','25001900PAN_dem','25001900PAN_dem.tif');
-XMLfileName = cat(2,DEM_TIFF_filename,'.xml');
+XMLfileName = fullfile(pwd,'Data','20001900PAN_bl.shp.xml');
 
 % Call the function
 LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName,(-1));
@@ -151,7 +220,7 @@ assert(isnumeric(LatLonLimits));
 assert(isequal(size(LatLonLimits),[1 4]));
 
 % Check variable values
-assert(isequal(round(LatLonLimits,4),[40.8251   40.8526  -77.9976  -77.9614]));
+assert(isequal(round(LatLonLimits,4),[40.6879   40.7154  -77.9971  -77.9609]));
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -164,8 +233,7 @@ fprintf(1,'Figure: %.0f: FAST mode comparisons\n',figNum);
 figure(figNum);
 close(figNum);
 
-DEM_TIFF_filename = fullfile(pwd,'Data','25001900PAN_dem','25001900PAN_dem.tif');
-XMLfileName = cat(2,DEM_TIFF_filename,'.xml');
+XMLfileName = fullfile(pwd,'Data','20001900PAN_bl.shp.xml');
 
 Niterations = 50;
 

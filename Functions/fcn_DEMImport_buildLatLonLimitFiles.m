@@ -4,7 +4,7 @@ function [LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathN
 %
 % FORMAT:
 %
-%      fcn_DEMImport_buildLatLonLimitFiles(rootPathName,(figNum));
+%      fcn_DEMImport_buildLatLonLimitFiles(rootPathName,(flagIgnoreLoadFiles),(figNum));
 %
 % INPUTS:
 %
@@ -12,6 +12,9 @@ function [LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathN
 %      file for a DEM
 %
 %      (OPTIONAL INPUTS)
+%
+%      flagIgnoreLoadFiles - if set to true, will ignore previously
+%      generated load files. Default is "false"
 %
 %      figNum - a figure number to plot results. If set to -1,
 %      skips any input checking or debugging, no figures will be generated,
@@ -52,7 +55,7 @@ function [LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathN
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 2; % The largest Number of argument inputs to the function
+MAX_NARGIN = 3; % The largest Number of argument inputs to the function
 flag_max_speed = 0; % The default. This runs code with all error checking
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; % Flag to plot the results for debugging
@@ -104,20 +107,19 @@ if 0==flag_max_speed
 end
 
 
-% % The following area checks for variable argument inputs (varargin)
-%
-% % Does the user want to specify the end_definition?
-% % Set defaults first:
-% end_zone_definition = start_zone_definition; % Default case
-% flag_end_is_a_point_type = flag_start_is_a_point_type; % Inheret the start case
-% % Check for user input
-% if 3 <= nargin
-%     temp = varargin{1};
-%     if ~isempty(temp)
-%         % Set the end values
-%         [flag_end_is_a_point_type, end_zone_definition] = fcn_Laps_checkZoneType(temp, 'end_definition', -1);
-%     end
-% end
+% The following area checks for variable argument inputs (varargin)
+
+% Does the user want to specify the flagIgnoreLoadFiles?
+% Set defaults first:
+flagIgnoreLoadFiles = false; % Default case
+
+% Check for user input
+if 2 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+       flagIgnoreLoadFiles = temp;
+    end
+end
 %
 % % Does the user want to specify excursion_definition?
 % flag_use_excursion_definition = 0; % Default case
@@ -157,6 +159,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 filesAndFoldersInThisFolder = dir(rootPathName);
+fprintf(1,'In folder: %s\n',rootPathName)
 
 rejectNames = {'.','..'};
 
@@ -165,7 +168,7 @@ subfoldersInThisFolder = filesAndFoldersInThisFolder([filesAndFoldersInThisFolde
 
 % Check for previous limits
 limitsFileName = fullfile(rootPathName,'latlonLimitsThisBranch.mat');
-if exist(limitsFileName,'file')
+if exist(limitsFileName,'file') && ~flagIgnoreLoadFiles
     load(limitsFileName,'LatLonLimits','zipPaths');
 else
     LatLonLimits = [];
@@ -177,8 +180,10 @@ for ith_folder = 1:length(subfoldersInThisFolder)
     thisFolderName = subfoldersInThisFolder(ith_folder).name;
     if ~any(strcmp(rejectNames,thisFolderName))
         subfolderPath = fullfile(rootPathName,thisFolderName);
-        [thisLatLonLimit,thisZipPath] = fcn_DEMImport_buildLatLonLimitFiles(subfolderPath, -1);
-        [LatLonLimits, zipPaths] = fcn_INTERNAL_conditionallyAdd(LatLonLimits, zipPaths,thisLatLonLimit, thisZipPath);
+        [thisLatLonLimit,thisZipPath] = fcn_DEMImport_buildLatLonLimitFiles(subfolderPath, flagIgnoreLoadFiles, figNum);
+
+		[LatLonLimits, zipPaths] = fcn_INTERNAL_conditionallyAdd(LatLonLimits, zipPaths,thisLatLonLimit, thisZipPath);
+
     end
 end
 
@@ -192,6 +197,8 @@ for ith_file = 1:length(fileListFunctionsFolderNoDirectories)
     thisFileName = fileListFunctionsFolderNoDirectories(ith_file).name;
     if contains(thisFileName,'.zip')
         thisZipPath = fullfile(rootPathName,thisFileName);
+		fprintf(1,'\t Extracting and analyzing: %s\n',thisZipPath)
+
         thisLatLonLimit = extractLimitsFromZipXmlFile(thisZipPath, figNum);
         if size(thisLatLonLimit,1)>1
             error('several XML files were found in the same zip file?');
@@ -217,21 +224,70 @@ end
 %                            __/ |
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if flag_do_plots
-    LLplotData = [...
-        LatLonLimits(1) LatLonLimits(3);
-        LatLonLimits(2) LatLonLimits(3);
-        LatLonLimits(2) LatLonLimits(4);
-        LatLonLimits(1) LatLonLimits(4);
-        LatLonLimits(1) LatLonLimits(3);
-        ];
-    clear plotFormat
-    plotFormat.Color = [0 0.7 0];
-    plotFormat.Marker = '.';
-    plotFormat.MarkerSize = 10;
-    plotFormat.LineStyle = '-';
-    plotFormat.LineWidth = 3;
-    fcn_plotRoad_plotLL(LLplotData, (plotFormat), (figNum));
+if flag_do_plots && ~isempty(LatLonLimits)
+	Nrows = size(LatLonLimits,1);
+	NpointsToFill = 6*Nrows;
+	LLdataToPlot = nan(NpointsToFill,2);
+
+	for ith_data = 1:Nrows
+		thisLatLonLimit = LatLonLimits(ith_data,:);
+		LLplotData = [...
+			thisLatLonLimit(1) thisLatLonLimit(3);
+			thisLatLonLimit(2) thisLatLonLimit(3);
+			thisLatLonLimit(2) thisLatLonLimit(4);
+			thisLatLonLimit(1) thisLatLonLimit(4);
+			thisLatLonLimit(1) thisLatLonLimit(3);
+			nan, nan;
+			];
+		rowsToFillStart = (ith_data-1)*6 + 1;
+		rowsToFillEnd = rowsToFillStart+5;
+		LLdataToPlot(rowsToFillStart:rowsToFillEnd,:) = LLplotData;
+	end
+
+	thisFigureData = get(gcf,'UserData');
+
+	if isempty(thisFigureData)
+		clear plotFormat
+		plotFormat.Color = 0.25*[1 1 1];
+		plotFormat.Marker = '.';
+		plotFormat.MarkerSize = 10;
+		plotFormat.LineStyle = '-';
+		plotFormat.LineWidth = 3;
+		h_inactive = fcn_plotRoad_plotLL([nan nan], (plotFormat), (figNum));
+
+		plotFormat.Color = [0 0.7 0];
+		plotFormat.Marker = '.';
+		plotFormat.MarkerSize = 10;
+		plotFormat.LineStyle = '-';
+		plotFormat.LineWidth = 3;
+		h_active = fcn_plotRoad_plotLL(LLdataToPlot, (plotFormat), (figNum));
+		
+		userData = struct;
+		userData.h_active = h_active;
+		userData.h_inactive = h_inactive;
+		set(gcf,'UserData',userData);
+	else
+		userData = get(gcf,'UserData');
+		h_active = userData.h_active;
+		h_inactive = userData.h_inactive;
+		oldXData = get(h_active,'LatitudeData');
+		oldYData = get(h_active,'LongitudeData');
+		oldInactiveXData = get(h_inactive,'LatitudeData');
+		oldInactiveYData = get(h_inactive,'LongitudeData');
+
+		oldXData = fcn_INTERNAL_fixMatrix(oldXData);
+		oldYData = fcn_INTERNAL_fixMatrix(oldYData);
+		oldInactiveXData = fcn_INTERNAL_fixMatrix(oldInactiveXData);
+		oldInactiveYData = fcn_INTERNAL_fixMatrix(oldInactiveYData);
+
+		newInactiveXData = [oldInactiveXData; oldXData];
+		newInactiveYData = [oldInactiveYData; oldYData];
+
+		set(h_inactive,'LatitudeData',newInactiveXData,'LongitudeData',newInactiveYData);
+		set(h_active,'LatitudeData',LLdataToPlot(:,1),'LongitudeData',LLdataToPlot(:,2));
+
+	end
+	pause(0.01);
 
 end
 
@@ -258,7 +314,7 @@ end % Ends main function
 % containing the XML filenames (one per row), and removes the temporary
 % folder when done
 
-function LatLonLimits = extractLimitsFromZipXmlFile(zipFile, figNum)
+function LatLonLimits = extractLimitsFromZipXmlFile(zipFile, figNum) %#ok<INUSD>
 % extractFromZipXmlFiles Extract zip to temp folder and return XML filenames
 %   xmlNames = listZipXmlFiles(zipFile) extracts zipFile to a new temporary
 %   folder, finds all .xml files (recursive), and returns their names as a
@@ -275,55 +331,134 @@ if ~isfile(zipFile)
 end
 
 % Create a unique temporary folder
-tmpBase = tempdir;
-tmpFolder = fullfile(tmpBase, ['ziptmp_' char(java.util.UUID.randomUUID)]);
+tmpFolder = fullfile(pwd,'Temp');
+if exist(tmpFolder,'dir')
+	rmdir(tmpFolder, 's');
+end
+
+% tmpFolder = fullfile(tmpBase, ['ziptmp_' char(java.util.UUID.randomUUID)]);
 mkdir(tmpFolder);
 
-% Ensure cleanup on function exit
-cleaner = onCleanup(@() rmdir(tmpFolder, 's'));
+% For debugging
+% zipFile = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\DEMsForPA\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000\30001180PAN_dem.zip';
 
 % Unzip into temporary folder
-unzip(zipFile, tmpFolder);
+s = dir(zipFile);
+filesize_bytes = s.bytes;
+
+if filesize_bytes==0
+	LatLonLimits = nan(1,4);
+	return;
+else
+	try
+		unzip(zipFile, tmpFolder);
+	catch
+		warning('Invalid zip file found (skipping): %s\n',zipFile);
+		LatLonLimits = nan(1,4);
+		return;
+	end
+end
 
 % Find XML files recursively (works in modern MATLAB)
 files = dir(fullfile(tmpFolder, '**', '*.xml'));
 
 if isempty(files)
-    error('No XML file file found in the DEM. Exiting');
+    error('No XML file file found in the DEM file: \n %s \n. Exiting',zipFile);
 end
 
 
 % Build full or relative names: choose full paths
-n = numel(files);
-names = cell(n,1);
-for k = 1:n
-    names{k} = fullfile(files(k).folder, files(k).name);
+numFiles = 0;
+names = cell(1,1);
+for k = 1:numel(files)
+	if ~contains(files(k).name,'aux')
+		numFiles = numFiles+1;
+		names{numFiles} = fullfile(files(k).folder, files(k).name);
+	end
 end
 
-if length(names)>1
-    error('More than 1 XML descriptor file was found in a DEM description. Exiting.');
+if length(names)>1 || 0==numFiles
+    error('More than 1 XML descriptor file was found in a DEM description, or 0 files, in file: \n %s \nExiting.',zipFile);
 end
 % Convert to character array (each name as a row, padded with spaces)
 xmlNames = char(names);
 
-LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(xmlNames,(figNum));
+% LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(xmlNames,(figNum*10));
+LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(xmlNames,-1);
+
+% Ensure cleanup on function exit
+rmdir(tmpFolder, 's');
+
 end
 
 %% fcn_INTERNAL_conditionallyAdd
 function [LatLonLimitsOut, zipPathsOut] = fcn_INTERNAL_conditionallyAdd(LatLonLimitsIn, zipPathsIn,thisLatLonLimit, thisZipPath)
 
-matches = strcmp(zipPathsIn,thisZipPath);
-zipPathsOut = zipPathsIn;
-if any(matches)
-    % Replace old data
-    LatLonLimitsOut = LatLonLimitsIn;
-    LatLonLimitsOut(matches,:) = thisLatLonLimit;
-else
-    LatLonLimitsOut = [LatLonLimitsIn; thisLatLonLimit];
-    if isempty(LatLonLimitsIn)
-        zipPathsOut{1,1} = thisZipPath;
-    else
-        zipPathsOut{end+1,1} = thisZipPath;
-    end
+% For debugging
+if 1==0
+	if 1==0
+		tempSave = fullfile(pwd,'Data','test_fcn_INTERNAL_conditionallyAdd');
+		save(tempSave,'LatLonLimitsIn', 'zipPathsIn','thisLatLonLimit', 'thisZipPath');
+	end
+	tempSave = fullfile(pwd,'Data','test_fcn_INTERNAL_conditionallyAdd');
+	load(tempSave,'LatLonLimitsIn', 'zipPathsIn','thisLatLonLimit', 'thisZipPath');
 end
+
+allEmptyZipPathsIn = all(cellfun(@isempty, zipPathsIn));
+if (~allEmptyZipPathsIn && ~isempty(thisLatLonLimit)) && size(LatLonLimitsIn,1)~=length(zipPathsIn)
+	error('Stophere1');
+end
+
+% Make sure that, if one is empty, other is also
+if allEmptyZipPathsIn && all(isnan(LatLonLimitsIn),'all')
+	LatLonLimitsIn = [];
+end
+
+zipPathsOut = zipPathsIn;
+LatLonLimitsOut = LatLonLimitsIn;
+
+if ~iscell(thisZipPath)
+	thisZipPath = {thisZipPath};
+end
+
+allEmptyThisZipPath = all(cellfun(@isempty, thisZipPath));
+if allEmptyThisZipPath
+	LatLonLimitsOut = nan(1,4);
+	return
+end
+
+for ith_path = 1:length(thisZipPath)
+	ithZipPath = thisZipPath{ith_path};
+	ithLatLonLimits = thisLatLonLimit(ith_path,:);
+	
+	matches = strcmp(zipPathsIn,ithZipPath);
+	if any(matches)
+		% Replace old data
+		LatLonLimitsOut(matches,:) = ithLatLonLimits;
+		zipPathsOut{matches,1} = ithZipPath;
+	else
+		LatLonLimitsOut = [LatLonLimitsOut; ithLatLonLimits]; %#ok<AGROW>
+		allEmpty = all(cellfun(@isempty, zipPathsOut));
+		if allEmpty
+			zipPathsOut{1,1} = ithZipPath;
+		else
+			zipPathsOut{end+1,1} = ithZipPath;
+		end
+	end
+end
+
+if size(LatLonLimitsOut,1)~=length(zipPathsOut)
+	error('Stophere2');
+end
+
 end % Ends fcn_INTERNAL_conditionallyAdd
+
+%% fcn_INTERNAL_fixMatrix
+function outMatrix = fcn_INTERNAL_fixMatrix(inMatrix)
+% Makes sure output matrix is column matrix, even if input is a row matrix
+if size(inMatrix,1)==1 && size(inMatrix,2)>1
+	outMatrix = inMatrix';
+else
+	outMatrix = inMatrix;
+end
+end % Ends fcn_INTERNAL_fixMatrix

@@ -38,12 +38,21 @@ fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 figNum = 10001;
 titleString = sprintf('DEMO case: simple demo of extracting limits');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
-% figure(figNum); clf;
+figure(figNum); close(figNum);
 
-rootPathName = fullfile(pwd,'Data','PA_DEMs');
+fcn_plotRoad_plotLL([],[],figNum);
+set(gca,'MapCenter',[41.2545 -78.0122], 'ZoomLevel', 6.875); % Entire state
+
+% rootPathName = fullfile(pwd,'LargeData','DEMsForPA');
+% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\DEMsForPA\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000\';
+% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\DEMsForPA\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000';
+rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\DEMsForPA\pamap\pamap_lidar\cycle1\DEM\';
+% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\DEMsForPA\pamap\pamap_lidar\cycle1\DEM\North\2007\30000000\';
+
+flagIgnoreLoadFiles = true;
 
 % Call the function
-fcn_DEMImport_buildLatLonLimitFiles(rootPathName,(figNum));
+[LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
 
 % sgtitle(titleString, 'Interpreter','none');
 % 
@@ -71,6 +80,8 @@ fcn_DEMImport_buildLatLonLimitFiles(rootPathName,(figNum));
 % 
 % % Make sure plot opened up
 % assert(isequal(get(gcf,'Number'),figNum));
+
+
 
 
 %% Download DEMS
