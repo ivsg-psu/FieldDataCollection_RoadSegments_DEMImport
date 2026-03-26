@@ -198,10 +198,11 @@ fileListFunctionsFolderNoDirectories = filesAndFoldersInThisFolder(~[filesAndFol
 for ith_file = 1:length(fileListFunctionsFolderNoDirectories)
     thisFileName = fileListFunctionsFolderNoDirectories(ith_file).name;
     if contains(thisFileName,'.zip')
-        thisZipPath = fullfile(rootPathName,thisFileName);
+        fullZipPath = fullfile(rootPathName,thisFileName);
+		thisZipPath = extractAfter(fullZipPath,'LargeData');
 		fprintf(1,'\t Extracting and analyzing: %s\n',thisZipPath)
 
-        thisLatLonLimit = extractLimitsFromZipXmlFile(thisZipPath, figNum);
+        thisLatLonLimit = extractLimitsFromZipXmlFile(fullZipPath, figNum);
         if size(thisLatLonLimit,1)>1
             error('several XML files were found in the same zip file?');
         end

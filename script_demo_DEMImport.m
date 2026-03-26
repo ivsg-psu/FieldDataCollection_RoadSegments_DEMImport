@@ -25,6 +25,11 @@
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
 % - In fcn_DEMImport_ImportDEMsFromPAMAP
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
+%
+% 2026_03_25 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_ImportDEMsFromPAMAP
+%   % * Changed root definition to start at "download" to match, exactly,
+%   %   % pasda website
 
 
 % TO-DO:

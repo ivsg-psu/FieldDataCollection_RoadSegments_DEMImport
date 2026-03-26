@@ -35,6 +35,12 @@ function fcn_DEMImport_ImportDEMsFromPAMAP(varargin)
 % 2026_03_13 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_ImportDEMsFromPAMAP
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
+%
+% 2026_03_25 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_ImportDEMsFromPAMAP
+%   % * Changed root definition to start at "download" to match, exactly,
+%   %   % pasda website
+
 
 % TO-DO:
 %
@@ -181,8 +187,12 @@ suffixes = {'_dem','_cont','_bl',''};
 NorthSouthDataset = {'North', 'South'};
 yearsToCheck = {'2006','2007','2008'};
 PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/';
-rootOfLargeDataPath = fullfile(pwd,'LargeData','DEMsForPA');
-for jth_direction = 1:1 %2
+
+% rootOfLargeDataPath = fullfile(pwd,'LargeData','download');
+% rootOfLargeDataPath = fullfile(pwd,'LargeData','download');
+rootOfLargeDataPath = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
+
+for jth_direction = 2:2 %2
 	thisDirection = NorthSouthDataset{jth_direction};
 
 	for kth_year = 1:length(yearsToCheck)
