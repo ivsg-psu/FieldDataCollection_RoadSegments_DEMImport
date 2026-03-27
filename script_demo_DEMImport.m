@@ -111,7 +111,7 @@ if ~exist('flag_DEMImport_Folders_Initialized','var')
 
     % Add this function's folders to the path
     this_project_folders = {...
-        'Functions','Data'};
+        'Functions','Data','LargeData'};
     fcn_DebugTools_addSubdirectoriesToPath(pwd,this_project_folders)
 
     flag_DEMImport_Folders_Initialized = 1;

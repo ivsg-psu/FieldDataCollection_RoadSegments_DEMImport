@@ -202,7 +202,8 @@ for ith_file = 1:length(fileListFunctionsFolderNoDirectories)
 		thisZipPath = extractAfter(fullZipPath,'LargeData');
 		fprintf(1,'\t Extracting and analyzing: %s\n',thisZipPath)
 
-        thisLatLonLimit = extractLimitsFromZipXmlFile(fullZipPath, figNum);
+		thisLatLonLimit = fcn_DEMImport_extractLimitsFromZipFile(fullZipPath, -1);
+
         if size(thisLatLonLimit,1)>1
             error('several XML files were found in the same zip file?');
         end
@@ -312,87 +313,6 @@ end % Ends main function
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-% The following MATLAB function extracts the given zip file to a temporary
-% folder, searches recursively for XML files, returns a character array
-% containing the XML filenames (one per row), and removes the temporary
-% folder when done
-
-function LatLonLimits = extractLimitsFromZipXmlFile(zipFile, figNum) %#ok<INUSD>
-% extractFromZipXmlFiles Extract zip to temp folder and return XML filenames
-%   xmlNames = listZipXmlFiles(zipFile) extracts zipFile to a new temporary
-%   folder, finds all .xml files (recursive), and returns their names as a
-%   character array (one filename per row). If no XML files found, returns
-%   an empty 0-by-0 char array.
-
-% Input validation
-if ~ischar(zipFile) && ~isstring(zipFile)
-    error('zipFile must be a character vector or string scalar.');
-end
-zipFile = char(zipFile);
-if ~isfile(zipFile)
-    error('Zip file does not exist: %s', zipFile);
-end
-
-% Create a unique temporary folder
-tmpFolder = fullfile(pwd,'Temp');
-if exist(tmpFolder,'dir')
-	rmdir(tmpFolder, 's');
-end
-
-% tmpFolder = fullfile(tmpBase, ['ziptmp_' char(java.util.UUID.randomUUID)]);
-mkdir(tmpFolder);
-
-% For debugging
-% zipFile = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\DEMsForPA\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000\30001180PAN_dem.zip';
-
-% Unzip into temporary folder
-s = dir(zipFile);
-filesize_bytes = s.bytes;
-
-if filesize_bytes==0
-	LatLonLimits = nan(1,4);
-	return;
-else
-	try
-		unzip(zipFile, tmpFolder);
-	catch
-		warning('Invalid zip file found (skipping): %s\n',zipFile);
-		LatLonLimits = nan(1,4);
-		return;
-	end
-end
-
-% Find XML files recursively (works in modern MATLAB)
-files = dir(fullfile(tmpFolder, '**', '*.xml'));
-
-if isempty(files)
-    error('No XML file file found in the DEM file: \n %s \n. Exiting',zipFile);
-end
-
-
-% Build full or relative names: choose full paths
-numFiles = 0;
-names = cell(1,1);
-for k = 1:numel(files)
-	if ~contains(files(k).name,'aux')
-		numFiles = numFiles+1;
-		names{numFiles} = fullfile(files(k).folder, files(k).name);
-	end
-end
-
-if length(names)>1 || 0==numFiles
-    error('More than 1 XML descriptor file was found in a DEM description, or 0 files, in file: \n %s \nExiting.',zipFile);
-end
-% Convert to character array (each name as a row, padded with spaces)
-xmlNames = char(names);
-
-% LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(xmlNames,(figNum*10));
-LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(xmlNames,-1);
-
-% Ensure cleanup on function exit
-rmdir(tmpFolder, 's');
-
-end
 
 %% fcn_INTERNAL_conditionallyAdd
 function [LatLonLimitsOut, zipPathsOut] = fcn_INTERNAL_conditionallyAdd(LatLonLimitsIn, zipPathsIn,thisLatLonLimit, thisZipPath)
@@ -445,7 +365,7 @@ for ith_path = 1:length(thisZipPath)
 		if allEmpty
 			zipPathsOut{1,1} = ithZipPath;
 		else
-			zipPathsOut{end+1,1} = ithZipPath;
+			zipPathsOut{end+1,1} = ithZipPath; %#ok<AGROW>
 		end
 	end
 end

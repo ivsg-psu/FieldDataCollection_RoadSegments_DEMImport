@@ -17,7 +17,7 @@ for ith_file = 1:length(files)
 
 	lasReader = lasFileReader(filepath);
 
-	[ptCloud, ~] = readPointCloud(lasReader, "Attributes", "Classification");
+	[ptCloud, ptAttributes] = readPointCloud(lasReader, "Attributes", "Classification");
 
 	loc = [loc; ptCloud.Location];   %#ok<AGROW> % Nx3
 	intensity = [intensity; ptCloud.Intensity]; %#ok<AGROW> % Nx1

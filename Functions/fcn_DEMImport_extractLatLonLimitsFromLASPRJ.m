@@ -1,14 +1,17 @@
-function LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName, varargin)
-% fcn_DEMImport_extractLatLonLimitsFromXML  extracts the latitude and
-% longitude limits from the XML file listing of a DEM.
+function LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, varargin)
+% fcn_DEMImport_extractLatLonLimitsFromLASPRJ  extracts the latitude and
+% longitude limits from the LAS / PRJ file listings of a DEM.
 %
 % FORMAT:
 %
-%      LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName,(figNum));
+%      LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath,(figNum));
 %
 % INPUTS:
 %
-%      XMLfileName - the filename, including path if necessary, of the XML
+%      lasFilepath - the filename, including path if necessary, of the PRJ
+%      file for a DEM
+%
+%      prjFilepath - the filename, including path if necessary, of the PRJ
 %      file for a DEM
 %
 %      (OPTIONAL INPUTS)
@@ -28,7 +31,7 @@ function LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName, va
 %
 % EXAMPLES:
 %
-%     See the script: script_test_fcn_DEMImport_extractLatLonLimitsFromXML
+%     See the script: script_test_fcn_DEMImport_extractLatLonLimitsFromLASPRJ
 %     for a full test suite.
 %
 % This function was written on 2026_03_21 by S. Brennan
@@ -37,7 +40,7 @@ function LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName, va
 % REVISION HISTORY:
 %
 % 2026_03_21 by Sean Brennan, sbrennan@psu.edu
-% - In fcn_DEMImport_extractLatLonLimitsFromXML
+% - In fcn_DEMImport_extractLatLonLimitsFromLASPRJ
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
 
 % TO-DO:
@@ -52,7 +55,7 @@ function LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(XMLfileName, va
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 2; % The largest Number of argument inputs to the function
+MAX_NARGIN = 3; % The largest Number of argument inputs to the function
 flag_max_speed = 0; % The default. This runs code with all error checking
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; % Flag to plot the results for debugging
@@ -95,7 +98,7 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(1,MAX_NARGIN);
+        narginchk(2,MAX_NARGIN);
 
         % % Check the input_path to be sure it has 2 or 3 columns, minimum 2 rows
         % % or more
@@ -151,139 +154,51 @@ end
 %  |_|  |_|\__,_|_|_| |_|
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%
 
+% read WKT text
+wkt = strtrim(fileread(prjFilepath));
 
-stringArrayOfDEMXMLfile = readlines(XMLfileName);
-
-%%%%%%%%%%%%%
-% For: dem.tif.xml tiles
-% THE TYPICAL STRUCTURE:
-% <geoBox esriExtentType="decdegrees">
-%   <westBL Sync="TRUE">-77.563532</westBL>
-%   <eastBL Sync="TRUE">-77.527231</eastBL>
-%   <northBL Sync="TRUE">40.989901</northBL>
-%   <southBL Sync="TRUE">40.96239</southBL>
-%   <exTypeCode Sync="TRUE">1</exTypeCode>
-% </geoBox>
-%
-% For: _bl.shp.xlm files
-% THE TYPICAL STRUCTURE:
-% <spdom>
-%   <bounding>
-%     <westbc Sync="TRUE">-77.997606</westbc>
-%     <eastbc Sync="TRUE">-77.961371</eastbc>
-%     <northbc Sync="TRUE">40.852624</northbc>
-%     <southbc Sync="TRUE">40.825105</southbc>
-%   </bounding>
-%   <lboundng>
-%     <leftbc Sync="TRUE">1900000.000000</leftbc>
-%     <rightbc Sync="TRUE">1910000.000000</rightbc>
-%     <bottombc Sync="TRUE">240000.000000</bottombc>
-%     <topbc Sync="TRUE">250000.000000</topbc>
-%   </lboundng>
-% </spdom>
-% OR
-% <geoBox esriExtentType="decdegrees">
-%   <westBL Sync="TRUE">-77.383416</westBL>
-%   <eastBL Sync="TRUE">-77.347132</eastBL>
-%   <northBL Sync="TRUE">40.824783</northBL>
-%   <southBL Sync="TRUE">40.797215</southBL>
-%   <exTypeCode Sync="TRUE">1</exTypeCode>
-% </geoBox>
-
-NlinesOfStrings = size(stringArrayOfDEMXMLfile,1);
-
-
-startOfSegmentString{1} = '<geoBox esriExtentType="decdegrees">';
-modifierString{1} = 'BL';
-startOfSegmentString{2} = '<bounding>';
-modifierString{2} = 'bc';
-boundingDirections = {'west','east','north','south'};
-
-flagWasFound = false;
-for ith_method = 1:length(startOfSegmentString)
-	if ~flagWasFound
-		thisStartOfSegmentString = startOfSegmentString{ith_method};
-
-		foundStartOfSegmentStringIndex = contains(stringArrayOfDEMXMLfile,thisStartOfSegmentString);
-		if any(foundStartOfSegmentStringIndex)
-			% Start string was found
-
-			% Tag all values after start string
-			flagIsAfterStartOfSegment = false(NlinesOfStrings,1);
-			startOfSegmentStringIndex = find(foundStartOfSegmentStringIndex);
-			if length(startOfSegmentStringIndex)>1
-				error('More than one start segment string found - exiting');
-			end
-			flagIsAfterStartOfSegment(startOfSegmentStringIndex:end,1) = true;
-			
-			thisDirectionString = boundingDirections{1};
-			startString = sprintf('<%s%s Sync="TRUE">',thisDirectionString, modifierString{ith_method});
-			startStringFound = contains(stringArrayOfDEMXMLfile,startString);
-			thisbcLine = startStringFound & flagIsAfterStartOfSegment;
-			if any(thisbcLine)
-				if sum(thisbcLine)>1
-					error('More than one possible start string entry found. Exiting');
-				end
-				flagWasFound = true;
-				goodMethod = ith_method;
-			end
-
-		end
-	end
-end
-
-if ~flagWasFound
-	warning('Unknown XML type detected. Not configured yet for processing. Filename: \n\t%s',XMLfileName);
-	LatLonLimits = [nan nan nan nan];
-	return;
-end
-
-
-
-
-
-LL_west_east_north_south = nan(4,1);
-for ith_direction = 1:length(boundingDirections)
-    thisDirectionString = boundingDirections{ith_direction};
-    startString = sprintf('<%s%s Sync="TRUE">',thisDirectionString, modifierString{goodMethod});
-	startStringFound = contains(stringArrayOfDEMXMLfile,startString);
-    thisbcLine = startStringFound & flagIsAfterStartOfSegment;
-    if ~any(thisbcLine)
-        error('The start string: %s was not found anywhere in the XML file');
-	else
-		if sum(thisbcLine)>1
-			error('More than one possible start string entry found. Exiting');
-		end
+% try to create a projcrs or geocrs from the WKT (Mapping Toolbox)
+try
+    % First try creating a projected CRS (projcrs accepts WKT)
+    crs = projcrs(wkt);
+catch
+    try
+        % If that fails, try geographic CRS
+        crs = geocrs(wkt);
+    catch
+        error("Could not interpret WKT from %s as a projcrs or geocrs.", prjFilepath);
     end
-
-    thisLineOfCharacters = stringArrayOfDEMXMLfile(thisbcLine);
-
-    % Look for the matching characters in this line of text
-    endString = sprintf('</%s%s>',thisDirectionString, modifierString{goodMethod});
-    thisCharacters = extractBetween(thisLineOfCharacters,startString,endString);
-	if size(thisCharacters,1)>1
-		% Keep data with decimal places
-		goodFlags = contains(thisCharacters,'.') & abs(str2double(thisCharacters))<100;
-		thisCharacters = thisCharacters(goodFlags);
-	end
-
-    if isempty(thisCharacters) || any(size(thisCharacters)>1,'all')
-        error('Unable to find matching characters. Exiting');
-    end
-
-	LL_west_east_north_south(ith_direction) = str2double(thisCharacters);
-
-    
 end
 
 
-% Determine geographic limits (cell-centered limits)
-% latlim = [min(latGrid(:)), max(latGrid(:))];
-% lonlim = [min(lonGrid(:)), max(lonGrid(:))];
-latlim = [LL_west_east_north_south(4), LL_west_east_north_south(3)];
-lonlim = [LL_west_east_north_south(1), LL_west_east_north_south(2)];
+lasReader = lasFileReader(lasFilepath);
+
+[ptCloud, ~] = readPointCloud(lasReader, "Attributes", "Classification");
+XYdata = ptCloud.Location;
+x = XYdata(:,1);
+y = XYdata(:,2);
+
+
+% Example: convert sample X,Y from LAS files to lat/lon
+% x,y are vectors read from LAS (e.g., via lasFileReader + readPointCloud)
+if isa(crs,"geographicCRS")
+    lon = x;
+    lat = y;
+else
+    % projcrs -> use projinv to get lat,lon
+    [lat, lon] = projinv(crs, x, y);
+end
+
+% get bounds
+minLon = min(lon); 
+maxLon = max(lon);
+minLat = min(lat); 
+maxLat = max(lat);
+
+% Determine geographic limits 
+latlim = [minLat maxLat];
+lonlim = [minLon maxLon];
 
 
 LatLonLimits = [latlim lonlim];
@@ -314,6 +229,9 @@ if flag_do_plots
     plotFormat.LineStyle = '-';
     plotFormat.LineWidth = 3;
     fcn_plotRoad_plotLL(LLplotData, (plotFormat), (figNum));
+	geolimits(latlim, lonlim);
+	currentZoom = get(gca,'ZoomLevel');
+	set(gca,'ZoomLevel',currentZoom-2);
 
 end
 
@@ -334,16 +252,4 @@ end % Ends main function
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
-
-% function INTERNAL_plot_circle(center_x, center_y, radius, color, linewidth)
-% 
-% % Plot the center point
-% % plot(center_x,center_y,'ro','Markersize',22);
-% 
-% % Plot circle
-% angles = 0:0.01:2*pi;
-% x_circle = center_x + radius * cos(angles);
-% y_circle = center_y + radius * sin(angles);
-% plot(x_circle,y_circle,'-','color',color,'Linewidth',linewidth);
-% end
 

@@ -1,10 +1,10 @@
-% script_test_fcn_DEMImport_buildLatLonLimitFiles.m
-% tests fcn_DEMImport_buildLatLonLimitFiles.m
+% script_test_fcn_DEMImport_ImportDEMsFromCounty.m
+% tests fcn_DEMImport_ImportDEMsFromCounty.m
 
 % REVISION HISTORY:
 %
-% 2026_03_21 by Sean Brennan, sbrennan@psu.edu
-% - In script_test_fcn_DEMImport_buildLatLonLimitFiles
+% 2026_03_13 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_fcn_DEMImport_ImportDEMsFromCounty
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
 
 % TO-DO:
@@ -34,59 +34,33 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: build files in Data directory
+%% DEMO case: load entire PAMAP database
 figNum = 10001;
-titleString = sprintf('DEMO case: simple demo of extracting limits');
+titleString = sprintf('DEMO case: load entire PAMAP database');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
-figure(figNum); close(figNum);
-
-fcn_plotRoad_plotLL([],[],figNum);
-set(gca,'MapCenter',[41.2545 -78.0122], 'ZoomLevel', 6.875); % Entire state
-
-% rootPathName = fullfile(pwd,'LargeData','download');
-% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000\';
-% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000';
-% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\';
-% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2007\30000000\';
-% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\LAS\';
-
-rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
-% rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\BL\South\2007\10000000\';
-
-flagIgnoreLoadFiles = false;
+% figure(figNum); clf;
 
 % Call the function
-[LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+fcn_DEMImport_ImportDEMsFromCounty((figNum));
 
-% sgtitle(titleString, 'Interpreter','none');
-% 
-% % Check variable types
-% assert(iscell(cell_array_of_lap_indices));
-% assert(iscell(cell_array_of_entry_indices));
-% assert(iscell(cell_array_of_exit_indices));
-% 
-% % Check variable sizes
-% Nlaps = 3;
-% assert(isequal(Nlaps,length(cell_array_of_lap_indices))); 
-% assert(isequal(Nlaps,length(cell_array_of_entry_indices))); 
-% assert(isequal(Nlaps,length(cell_array_of_exit_indices))); 
-% 
-% % Check variable values
-% % Are the laps starting at expected points?
-% assert(isequal(2,min(cell_array_of_lap_indices{1})));
-% assert(isequal(102,min(cell_array_of_lap_indices{2})));
-% assert(isequal(215,min(cell_array_of_lap_indices{3})));
-% 
-% % Are the laps ending at expected points?
-% assert(isequal(88,max(cell_array_of_lap_indices{1})));
-% assert(isequal(199,max(cell_array_of_lap_indices{2})));
-% assert(isequal(293,max(cell_array_of_lap_indices{3})));
-% 
-% % Make sure plot opened up
-% assert(isequal(get(gcf,'Number'),figNum));
+https://www.pasda.psu.edu/download/alleghenycountyimagery2015/LiDAR/ClassifiedLAS/PAALLE_PA_S_SP83_sft/13604E409149N_las.zip
+https://www.pasda.psu.edu/download/alleghenycountyimagery2015/Spring_3inOrtho/GeoTIFFs/13604E409149N_tif.zip
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13578E409149N.zip
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/PAAlleghenyCo_Contours2017/Contour2ft_13578E409149N.zip
+
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/12997E498909N.zip (NW: )
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/14290E496269N.zip (NE: )
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/12390E432909N.zip (mostW: )
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13842E319389N.zip (mostS: )
 
 
+Increments (N to S): (2640)
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E498909N.zip
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E496269N.zip
+https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E493629N.zip
 
+Increments (W to E): 
+[12390 12416 12442 12469 12495 12522]
 
 %% Download DEMS
 
@@ -220,7 +194,7 @@ fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
 % 
 % [cell_array_of_lap_indices, ...
 %     cell_array_of_entry_indices, cell_array_of_exit_indices] = ...
-%     fcn_DEMImport_buildLatLonLimitFiles(...
+%     fcn_DEMImport_ImportDEMsFromCounty(...
 %     tempXYdata,...
 %     start_definition,...
 %     end_definition,...
@@ -270,7 +244,7 @@ fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
 % 
 % [cell_array_of_lap_indices, ...
 %     cell_array_of_entry_indices, cell_array_of_exit_indices] = ...
-%     fcn_DEMImport_buildLatLonLimitFiles(...
+%     fcn_DEMImport_ImportDEMsFromCounty(...
 %     tempXYdata,...
 %     start_definition,...
 %     end_definition,...
@@ -328,7 +302,7 @@ fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
 %     % Call the function
 %     [cell_array_of_lap_indices, ...
 %         cell_array_of_entry_indices, cell_array_of_exit_indices] = ...
-%         fcn_DEMImport_buildLatLonLimitFiles(...
+%         fcn_DEMImport_ImportDEMsFromCounty(...
 %         tempXYdata,...
 %         start_definition,...
 %         end_definition,...
@@ -343,7 +317,7 @@ fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
 %     % Call the function
 %     [cell_array_of_lap_indices, ...
 %         cell_array_of_entry_indices, cell_array_of_exit_indices] = ...
-%         fcn_DEMImport_buildLatLonLimitFiles(...
+%         fcn_DEMImport_ImportDEMsFromCounty(...
 %         tempXYdata,...
 %         start_definition,...
 %         end_definition,...
