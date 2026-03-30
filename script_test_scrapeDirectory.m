@@ -87,8 +87,19 @@ fprintf(1,'Total directories: %d\n',Ndirectories);
 fprintf(1,'Total files and directories: %d\n',NfilesAndDirectories);
 fprintf(1,'Elapsed scan time: %.2f seconds\n\n',elapsedTime);
 
-saveFileName = fullfile(pwd,'LargeData','scrapeDirectoryResultPASDA.mat');
+saveFileName = fullfile(pwd,'Data','scrapeDirectoryResultPASDA.mat');
 save(saveFileName,'completeFileAndDirectoryList');
+
+%%
+allURLs = completeFileAndDirectoryList(:,1);
+isemptyFlags = cellfun(@isempty, allURLs);
+goodListings = completeFileAndDirectoryList(~isemptyFlags,:);
+indicesOfLidar = contains(goodListings(:,1),'lidar','IgnoreCase',true);
+lidarbytes = cell2mat(goodListings(indicesOfLidar,4));
+totalLidarGBytes = fcn_DebugTools_number2string(sum(lidarbytes)/1E9);
+fprintf(1,'Total GB of LiDAR data: %s\n',totalLidarGBytes);
+
+
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
