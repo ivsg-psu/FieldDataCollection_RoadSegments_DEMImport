@@ -1,105 +1,134 @@
-warning('A complete "fast" scan of the pasda website produces 1384496 entries, scans 6867 folders, and takes 30 minutes. A regular scan takes more than 3 hours. Be sure your time and memory capacity are sufficient! Press any key to continue.')
-pause;
-
-% Set this to true to do a "fast" scan, e.g. only 30 minutes, and NOT save
-% any data.
-flagDoScanOnly = false;
-
-fprintf(1, 'Starting the scan process...\n');
-
-rootHyperlink = 'https://www.pasda.psu.edu/download/';
-% rootHyperlink = 'https://www.pasda.psu.edu/download/adamscounty/';
-
-flagKeepGoing = true;
-
-% thisURL, sourceFolderURL, date, time, bytes, flagWasScanned
-maxPossibleEntries = 1500000;
-completeFileAndDirectoryList = cell(maxPossibleEntries,5);
-completeFileAndDirectoryList{1,1} = rootHyperlink;
-completeFileAndDirectoryList{1,2} = rootHyperlink;
-completeFileAndDirectoryList{1,3} = "2026";
-completeFileAndDirectoryList{1,4} = 0;
-completeFileAndDirectoryList{1,5} = 0;
-
-tic
-totalBytes = 0;
-NfilesAndDirectories = 1;
-Ndirectories = 1;
-while flagKeepGoing
-	flagsWasScanned = cell2mat(completeFileAndDirectoryList(:,end));
-	indexToScanNext = find(flagsWasScanned==0,1,'last');
-	if isempty(indexToScanNext)
-        flagKeepGoing = false; % No more URLs to scan, exit the loop
-    else
-		thisURL = completeFileAndDirectoryList{indexToScanNext,1}; % Get the URL
-		fprintf(1,'Scanning %s,',thisURL);
-		thisExtension = extractAfter(thisURL,'/download/');
-		[stringArrayOfFullURLs, arrayOfBytes, stringArrayOfdateAndTimeString] = getRowsOfInfoFromURL(thisURL,cat(2,'/download/',thisExtension));
-		Nlinks = size(stringArrayOfFullURLs,1);
-
-		% Shut off this URL - no need to scan again
-		completeFileAndDirectoryList{indexToScanNext,end} = 1;
-
-		% update flags for new URLs
-		newFlagsWasScanned = true(Nlinks,1);
-		newFlagsWasScanned(arrayOfBytes==0) = 0;
-
-		% Set any URL that does not end in "/" as NOT a URL to scan
-		lastCharacters = extractAfter(stringArrayOfFullURLs, strlength(stringArrayOfFullURLs)-1);
-		newFlagsWasScanned(lastCharacters~='/') = 1;
-		
-
-		% Build new checklist
-		cellArrayOfFullURLs = cellstr(stringArrayOfFullURLs);
-		cellArrayOfSourceFolderURLs = cellstr(repmat(string(thisURL),Nlinks,1));
-		cellArrayOfDateAndTime = cellstr(stringArrayOfdateAndTimeString);
-		cellArrayOfBytes    = num2cell(arrayOfBytes,2);
-		cellArrayOfFlagWasScanned   = num2cell(newFlagsWasScanned,2);
-
-		newCheckList = [cellArrayOfFullURLs, cellArrayOfSourceFolderURLs,cellArrayOfDateAndTime, cellArrayOfBytes, cellArrayOfFlagWasScanned];
-		
-		NthisScan = size(newCheckList,1);
-
-		thisBytes = sum(cell2mat(cellArrayOfBytes));
-		thisGBytes = fcn_DebugTools_number2string(thisBytes/1E9);
-		fprintf(1,' .. GB in this folder: %s ',thisGBytes);
-
-
-		% Update the old checklist with only new URLs?
-		if flagDoScanOnly
-			onlyDirectories = newCheckList(newFlagsWasScanned==0,:); %#ok<UNRCH>
-			Ndirectories = Ndirectories + size(onlyDirectories,1);
-			completeFileAndDirectoryList = [completeFileAndDirectoryList; onlyDirectories]; 
-		else
-			startIndex = NfilesAndDirectories + 1;
-			endIndex = NfilesAndDirectories + NthisScan;
-			completeFileAndDirectoryList(startIndex:endIndex,:) = newCheckList;
-		end
-		NfilesAndDirectories = NfilesAndDirectories + NthisScan;
-	end
-	totalBytes = totalBytes + thisBytes;
-	totalGBytes = fcn_DebugTools_number2string(totalBytes/1E9);
-	fprintf(1,' .. GB so far: %s\n',totalGBytes);
-end
-elapsedTime = toc;
-fprintf(1,'Total GB: %s\n',totalGBytes);
-fprintf(1,'Total directories: %d\n',Ndirectories);
-fprintf(1,'Total files and directories: %d\n',NfilesAndDirectories);
-fprintf(1,'Elapsed scan time: %.2f seconds\n\n',elapsedTime);
-
 saveFileName = fullfile(pwd,'Data','scrapeDirectoryResultPASDA.mat');
-save(saveFileName,'completeFileAndDirectoryList');
+if exist(saveFileName,'file')
+	load(saveFileName,'completeFileAndDirectoryList');
+else
+	warning('A complete "fast" scan of the pasda website produces 1384496 entries, scans 6867 folders, and takes 30 minutes. A regular scan takes more than 3 hours. Be sure your time and memory capacity are sufficient! Press any key to continue.')
+	pause;
+
+
+	% Set this to true to do a "fast" scan, e.g. only 30 minutes, and NOT save
+	% any data.
+	flagDoScanOnly = false;
+
+	fprintf(1, 'Starting the scan process...\n');
+
+	rootHyperlink = 'https://www.pasda.psu.edu/download/';
+	% rootHyperlink = 'https://www.pasda.psu.edu/download/adamscounty/';
+
+	flagKeepGoing = true;
+
+	% thisURL, sourceFolderURL, date, time, bytes, flagWasScanned
+	maxPossibleEntries = 1500000;
+	completeFileAndDirectoryList = cell(maxPossibleEntries,5);
+	completeFileAndDirectoryList{1,1} = rootHyperlink;
+	completeFileAndDirectoryList{1,2} = rootHyperlink;
+	completeFileAndDirectoryList{1,3} = "2026";
+	completeFileAndDirectoryList{1,4} = 0;
+	completeFileAndDirectoryList{1,5} = 0;
+
+	tic
+	totalBytes = 0;
+	NfilesAndDirectories = 1;
+	Ndirectories = 1;
+	while flagKeepGoing
+		flagsWasScanned = cell2mat(completeFileAndDirectoryList(:,end));
+		indexToScanNext = find(flagsWasScanned==0,1,'last');
+		if isempty(indexToScanNext)
+			flagKeepGoing = false; % No more URLs to scan, exit the loop
+		else
+			thisURL = completeFileAndDirectoryList{indexToScanNext,1}; % Get the URL
+			fprintf(1,'Scanning %s,',thisURL);
+			thisExtension = extractAfter(thisURL,'/download/');
+			[stringArrayOfFullURLs, arrayOfBytes, stringArrayOfdateAndTimeString] = getRowsOfInfoFromURL(thisURL,cat(2,'/download/',thisExtension));
+			Nlinks = size(stringArrayOfFullURLs,1);
+
+			% Shut off this URL - no need to scan again
+			completeFileAndDirectoryList{indexToScanNext,end} = 1;
+
+			% update flags for new URLs
+			newFlagsWasScanned = true(Nlinks,1);
+			newFlagsWasScanned(arrayOfBytes==0) = 0;
+
+			% Set any URL that does not end in "/" as NOT a URL to scan
+			lastCharacters = extractAfter(stringArrayOfFullURLs, strlength(stringArrayOfFullURLs)-1);
+			newFlagsWasScanned(lastCharacters~='/') = 1;
+
+
+			% Build new checklist
+			cellArrayOfFullURLs = cellstr(stringArrayOfFullURLs);
+			cellArrayOfSourceFolderURLs = cellstr(repmat(string(thisURL),Nlinks,1));
+			cellArrayOfDateAndTime = cellstr(stringArrayOfdateAndTimeString);
+			cellArrayOfBytes    = num2cell(arrayOfBytes,2);
+			cellArrayOfFlagWasScanned   = num2cell(newFlagsWasScanned,2);
+
+			newCheckList = [cellArrayOfFullURLs, cellArrayOfSourceFolderURLs,cellArrayOfDateAndTime, cellArrayOfBytes, cellArrayOfFlagWasScanned];
+
+			NthisScan = size(newCheckList,1);
+
+			thisBytes = sum(cell2mat(cellArrayOfBytes));
+			thisGBytes = fcn_DebugTools_number2string(thisBytes/1E9);
+			fprintf(1,' .. GB in this folder: %s ',thisGBytes);
+
+
+			% Update the old checklist with only new URLs?
+			if flagDoScanOnly
+				onlyDirectories = newCheckList(newFlagsWasScanned==0,:); %#ok<UNRCH>
+				Ndirectories = Ndirectories + size(onlyDirectories,1);
+				completeFileAndDirectoryList = [completeFileAndDirectoryList; onlyDirectories];
+			else
+				startIndex = NfilesAndDirectories + 1;
+				endIndex = NfilesAndDirectories + NthisScan;
+				completeFileAndDirectoryList(startIndex:endIndex,:) = newCheckList;
+			end
+			NfilesAndDirectories = NfilesAndDirectories + NthisScan;
+		end
+		totalBytes = totalBytes + thisBytes;
+		totalGBytes = fcn_DebugTools_number2string(totalBytes/1E9);
+		fprintf(1,' .. GB so far: %s\n',totalGBytes);
+	end
+	elapsedTime = toc;
+	fprintf(1,'Total GB: %s\n',totalGBytes);
+	fprintf(1,'Total directories: %d\n',Ndirectories);
+	fprintf(1,'Total files and directories: %d\n',NfilesAndDirectories);
+	fprintf(1,'Elapsed scan time: %.2f seconds\n\n',elapsedTime);
+
+	saveFileName = fullfile(pwd,'Data','scrapeDirectoryResultPASDA.mat');
+	save(saveFileName,'completeFileAndDirectoryList');
+end
 
 %%
 allURLs = completeFileAndDirectoryList(:,1);
 isemptyFlags = cellfun(@isempty, allURLs);
 goodListings = completeFileAndDirectoryList(~isemptyFlags,:);
-indicesOfLidar = contains(goodListings(:,1),'lidar','IgnoreCase',true);
-lidarbytes = cell2mat(goodListings(indicesOfLidar,4));
-totalLidarGBytes = fcn_DebugTools_number2string(sum(lidarbytes)/1E9);
-fprintf(1,'Total GB of LiDAR data: %s\n',totalLidarGBytes);
 
 
+dataStringToExtract = 'lidar';
+lidarListings = fcn_INTERNAL_extractSpecificString(goodListings, dataStringToExtract);
+bytesVector = cell2mat(lidarListings(:,4));
+totalGBytes = fcn_DebugTools_number2string(sum(bytesVector)/1E9);
+fprintf(1,'Total GB of %s data: %s\n',dataStringToExtract, totalGBytes);
+
+dataStringToExtract = 'pamap';
+pamapListings = fcn_INTERNAL_extractSpecificString(goodListings, dataStringToExtract);
+bytesVector = cell2mat(pamapListings(:,4));
+totalGBytes = fcn_DebugTools_number2string(sum(bytesVector)/1E9);
+fprintf(1,'Total GB of %s data: %s\n',dataStringToExtract, totalGBytes);
+
+dataStringToExtract = 'usgs';
+usgsListings = fcn_INTERNAL_extractSpecificString(goodListings, dataStringToExtract);
+bytesVector = cell2mat(usgsListings(:,4));
+totalGBytes = fcn_DebugTools_number2string(sum(bytesVector)/1E9);
+fprintf(1,'Total GB of %s data: %s\n',dataStringToExtract, totalGBytes);
+
+%% Copy PAMAP to local drive
+
+for ith_listing = 1:length(pamapListings)
+	URLtoImport = pamapListings{ith_listing,1};
+	% Call the function
+	fcn_DEMImport_ImportZipFromURL(URLtoImport, (figNum));
+end
+
+%% 
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -278,3 +307,9 @@ if isequal(size(inputString),[1 1]) && flagForceRows
 	 splitResult = splitResult';
 end
 end % Ends fcn_INTERNAL_goodSplit
+
+%%
+function extractedListings = fcn_INTERNAL_extractSpecificString(lidarListings, dataStringToExtract)
+indicesToExtract = contains(lidarListings(:,1),dataStringToExtract,'IgnoreCase',true);
+extractedListings = lidarListings(indicesToExtract,:);
+end
