@@ -1,4 +1,4 @@
-function LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, varargin)
+function [limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, varargin)
 % fcn_DEMImport_extractLatLonLimitsFromLASPRJ  extracts the latitude and
 % longitude limits from the LAS / PRJ file listings of a DEM.
 %
@@ -22,8 +22,11 @@ function LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath,
 %
 % OUTPUTS:
 %
-%      LatLonLimits - the latitude and longitude limits of the DEM as given
+%      limitsLatLon - the latitude and longitude limits of the DEM as given
 %      by [lat_low lat_high lon_low lon_high]
+%
+%      limitsFt - the ft limits of the DEM as given
+%      by [ west_ft east_ft south_ft north_ft]
 %
 % DEPENDENCIES:
 %
@@ -42,6 +45,10 @@ function LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath,
 % 2026_03_21 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_extractLatLonLimitsFromLASPRJ
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
+%
+% 2026_04_03 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_extractLatLonLimitsFromLASPRJ
+%   % * Added limitsFt output
 
 % TO-DO:
 %
@@ -171,8 +178,15 @@ catch
     end
 end
 
-
-lasReader = lasFileReader(lasFilepath);
+try
+	lasReader = lasFileReader(lasFilepath);
+catch
+	warning('backtrace','on');
+	warning('Unable to load LASPRJ file: %s\n\t Skipping.\n',prjFilepath);
+	limitsLatLon = nan(1,4);
+	limitsFt = nan(1,4);
+	return;
+end
 
 [ptCloud, ~] = readPointCloud(lasReader, "Attributes", "Classification");
 XYdata = ptCloud.Location;
@@ -201,7 +215,7 @@ latlim = [minLat maxLat];
 lonlim = [minLon maxLon];
 
 
-LatLonLimits = [latlim lonlim];
+limitsLatLon = [latlim lonlim];
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -216,11 +230,11 @@ LatLonLimits = [latlim lonlim];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
     LLplotData = [...
-        LatLonLimits(1) LatLonLimits(3);
-        LatLonLimits(2) LatLonLimits(3);
-        LatLonLimits(2) LatLonLimits(4);
-        LatLonLimits(1) LatLonLimits(4);
-        LatLonLimits(1) LatLonLimits(3);
+        limitsLatLon(1) limitsLatLon(3);
+        limitsLatLon(2) limitsLatLon(3);
+        limitsLatLon(2) limitsLatLon(4);
+        limitsLatLon(1) limitsLatLon(4);
+        limitsLatLon(1) limitsLatLon(3);
         ];
     clear plotFormat
     plotFormat.Color = [0 0.7 0];

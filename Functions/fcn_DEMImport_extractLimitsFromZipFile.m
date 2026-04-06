@@ -1,4 +1,4 @@
-function LatLonLimits = fcn_DEMImport_extractLimitsFromZipFile(zipFile, varargin)
+function [limitsLatLon, limitsFt] = fcn_DEMImport_extractLimitsFromZipFile(zipFile, varargin)
 % fcn_DEMImport_extractLimitsFromZipFile  extracts the given zip file to a
 % temporary folder, searches for XML files, uses the XML file to find
 % LatLonLimits, and removes the temporary folder when done
@@ -37,7 +37,11 @@ function LatLonLimits = fcn_DEMImport_extractLimitsFromZipFile(zipFile, varargin
 % 2026_03_26 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_extractLimitsFromZipFile
 %   % * Wrote the code originally
-
+%
+% 2026_04_03 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_extractLimitsFromZipFile
+%   % * Functionalized file checking to include many different types
+%   % * Added limitsFt output
 
 % TO-DO:
 %
@@ -141,7 +145,7 @@ flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
-        figNum = temp; %#ok<NASGU>
+        figNum = temp; 
         flag_do_plots = 1;
     end
 end
@@ -156,6 +160,10 @@ end
 %  |_|  |_|\__,_|_|_| |_|
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+limitsLatLon = nan(1,4);
+limitsFt = nan(1,4);
+
 % Create a unique temporary folder
 tmpFolder = fullfile(pwd,'TempExtract');
 if exist(tmpFolder,'dir')
@@ -173,71 +181,48 @@ s = dir(zipFile);
 filesize_bytes = s.bytes;
 
 if filesize_bytes==0
-	LatLonLimits = nan(1,4);
 	return;
 else
 	try
 		unzip(zipFile, tmpFolder);
 	catch
 		warning('Invalid zip file found (skipping): %s\n',zipFile);
-		LatLonLimits = nan(1,4);
 		return;
+
 	end
 end
 
 % Find XML files recursively (works in modern MATLAB)
-xmlfiles = dir(fullfile(tmpFolder, '**', '*.xml'));
+[flagXMLWasFound,xmlFilePath] = fcn_INTERNAL_checkForFilesOfType(tmpFolder, 'xml', zipFile);
+[flagPRJWasFound,prjFilePath] = fcn_INTERNAL_checkForFilesOfType(tmpFolder, 'prj', zipFile);
+[flagMDBWasFound, ~] = fcn_INTERNAL_checkForFilesOfType(tmpFolder, 'mdb', zipFile); % Microsoft database files
 
-if ~isempty(xmlfiles)
-
-	% Build full or relative names: choose full paths
-	numFiles = 0;
-	names = cell(1,1);
-	for k = 1:numel(xmlfiles)
-		if ~contains(xmlfiles(k).name,'aux')
-			numFiles = numFiles+1;
-			names{numFiles} = fullfile(xmlfiles(k).folder, xmlfiles(k).name);
-		end
-	end
-
-	if length(names)>1 || 0==numFiles
-		error('More than 1 XML descriptor file was found in a DEM description, or 0 files, in file: \n %s \nExiting.',zipFile);
-	end
-	% Convert to character array (each name as a row, padded with spaces)
-	xmlNames = char(names);
+if flagXMLWasFound
 
 	% LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(xmlNames,(figNum*10));
-	LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromXML(xmlNames,-1);
+	[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromXML(xmlFilePath,-1);
 
+elseif flagPRJWasFound
+
+	prefix = extractBefore(prjFilePath,'.prj');
+	lasFilePath = cat(2,prefix,'.las');
+
+	[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilePath, prjFilePath,-1);
+	
+elseif flagMDBWasFound
+	% 'mdb' is a microsoft database file - this is just a listing of files.
+	% No LLA data is contained here
+	limitsLatLon = [nan nan nan nan];
+	limitsFt = [nan nan nan nan];
+	return;
 else
-	% Find PRJ files 
-	prjfiles = dir(fullfile(tmpFolder, '**', '*.prj'));
-
-	if ~isempty(prjfiles)
-
-		% Build full or relative names: choose full paths
-		numFiles = 0;
-		names = cell(1,1);
-		for k = 1:numel(prjfiles)
-			if ~contains(prjfiles(k).name,'aux')
-				numFiles = numFiles+1;
-				names{numFiles} = fullfile(prjfiles(k).folder, prjfiles(k).name);
-			end
-		end
-
-		if length(names)>1 || 0==numFiles
-			error('More than 1 PRJ descriptor file was found in a DEM description, or 0 files, in file: \n %s \nExiting.',zipFile);
-		end
-		% Convert to character array (each name as a row, padded with spaces)
-		prjFilepath = char(names);
-		prefix = extractBefore(prjFilepath,'.prj');
-		lasFilepath = cat(2,prefix,'.las');
-
-		LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath,-1);
-	else
-		error('No XML file file found in the DEM file: \n %s \n. Exiting',zipFile);
-	end
+	warning('backtrace','on');
+	warning('No XML or PRJ file file found in the DEM file: \n %s \n. Exiting',zipFile);
+	limitsLatLon = nan(1,4);
+	limitsFt = nan(1,4);
+	return;
 end
+
 % Ensure cleanup on function exit
 rmdir(tmpFolder, 's');
 
@@ -254,11 +239,11 @@ rmdir(tmpFolder, 's');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
 	LLplotData = [...
-		LatLonLimits(1) LatLonLimits(3);
-		LatLonLimits(2) LatLonLimits(3);
-		LatLonLimits(2) LatLonLimits(4);
-		LatLonLimits(1) LatLonLimits(4);
-		LatLonLimits(1) LatLonLimits(3);
+		limitsLatLon(1) limitsLatLon(3);
+		limitsLatLon(2) limitsLatLon(3);
+		limitsLatLon(2) limitsLatLon(4);
+		limitsLatLon(1) limitsLatLon(4);
+		limitsLatLon(1) limitsLatLon(3);
 		];
 	clear plotFormat
 	plotFormat.Color = [0 0.7 0];
@@ -267,7 +252,7 @@ if flag_do_plots
 	plotFormat.LineStyle = '-';
 	plotFormat.LineWidth = 3;
 	fcn_plotRoad_plotLL(LLplotData, (plotFormat), (figNum));
-	geolimits(LatLonLimits(1,1:2), LatLonLimits(1,3:4));
+	geolimits(limitsLatLon(1,1:2), limitsLatLon(1,3:4));
 	currentZoom = get(gca,'ZoomLevel');
 	set(gca,'ZoomLevel',currentZoom-2);
       
@@ -291,4 +276,29 @@ end % Ends main function
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
+function [flagTypeWasFound,xmlNames] = fcn_INTERNAL_checkForFilesOfType(tmpFolder, fileTypeString, zipFile)
+% Find if files files of a particular type exist in a given folder
+filesOfThisType = dir(fullfile(tmpFolder, '**', sprintf('*.%s',fileTypeString)));
 
+flagTypeWasFound = false;
+xmlNames = [];
+if ~isempty(filesOfThisType)
+	flagTypeWasFound = true;
+
+	% Build full or relative names: choose full paths
+	numFiles = 0;
+	names = cell(1,1);
+	for k = 1:numel(filesOfThisType)
+		if ~contains(filesOfThisType(k).name,'aux')
+			numFiles = numFiles+1;
+			names{numFiles,1} = fullfile(filesOfThisType(k).folder, filesOfThisType(k).name);
+		end
+	end
+
+	if length(names)>1 || 0==numFiles
+		warning('More than 1 %s descriptor files were found in a zip file: \n %s \n.',upper(fileTypeString),zipFile);
+	end
+	% Convert to character array (each name as a row, padded with spaces)
+	xmlNames = char(names);
+end
+end

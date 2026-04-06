@@ -1,10 +1,10 @@
-function fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
+function saveTime = fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
 % fcn_DEMImport_ImportZipFromURL  imports PAMAP DEMs from the PASDA
 % database
 %
 % FORMAT:
 %
-%      fcn_DEMImport_ImportZipFromURL(URLtoImport, (figNum));
+%      fcn_DEMImport_ImportZipFromURL(URLtoImport, (estimatedSeconds), (figNum));
 %
 % INPUTS:
 %
@@ -12,13 +12,15 @@ function fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
 %
 %      (OPTIONAL INPUTS)
 %
+%      estimatedSeconds - an estimate of the download time in seconds
+%
 %      figNum - a figure number to plot results. If set to -1,
 %      skips any input checking or debugging, no figures will be generated,
 %      and sets up code to maximize speed.
 %
 % OUTPUTS:
 %
-%      (none)
+%      saveTime: the actual number of seconds the download required
 %
 % DEPENDENCIES:
 %
@@ -37,11 +39,18 @@ function fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
 % 2026_03_31 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_ImportZipFromURL
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
+%
+% 2026_04_02 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_ImportZipFromURL
+%   % * Added estimated completion time as input, actual time as output
+%   % * Added error reporting
+
 
 % TO-DO:
 %
 % 2026_03_31 by Sean Brennan, sbrennan@psu.edu
-% - (fill in items here)
+% - Nothing to add here
+
 
 
 
@@ -50,7 +59,7 @@ function fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 2; % The largest Number of argument inputs to the function
+MAX_NARGIN = 3; % The largest Number of argument inputs to the function
 flag_max_speed = 0; % The default. This runs code with all error checking
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; % Flag to plot the results for debugging
@@ -102,20 +111,20 @@ if 0==flag_max_speed
 end
 
 
-% % The following area checks for variable argument inputs (varargin)
-% 
-% % Does the user want to specify the end_definition?
-% % Set defaults first:
-% end_zone_definition = start_zone_definition; % Default case
-% flag_end_is_a_point_type = flag_start_is_a_point_type; % Inheret the start case
-% % Check for user input
-% if 3 <= nargin
-%     temp = varargin{1};
-%     if ~isempty(temp)
-%         % Set the end values
-%         [flag_end_is_a_point_type, end_zone_definition] = fcn_Laps_checkZoneType(temp, 'end_definition', -1);
-%     end
-% end
+% The following area checks for variable argument inputs (varargin)
+
+% Does the user want to specify the estimatedSeconds?
+% Set defaults first:
+estimatedSeconds = []; % Default case
+
+% Check for user input
+if 3 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+        % Set the estimatedSeconds
+        estimatedSeconds = temp;
+    end
+end
 % 
 % % Does the user want to specify excursion_definition?
 % flag_use_excursion_definition = 0; % Default case
@@ -149,6 +158,7 @@ end
 %  |_|  |_|\__,_|_|_| |_|
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+tic
 
 PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/';
 rootOfLargeDataPath = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
@@ -166,34 +176,50 @@ if ~exist(folderPathLargeData,'dir')
 	error('Path does not exist: %s',pathToFolder);
 end
 
+% Is an estimate provided?
+if ~isempty(estimatedSeconds)
+	fprintf(1,'Estimating %.2f sec to complete. ',estimatedSeconds)
+end
+
 % Define the output file with full path
 if URLtoImport(end)=='/'
 	fprintf(1,'Made directory for %s \n', URLtoImport);
+	saveTime = toc;
 else
 	fileName = URLtoImport(lastIndex+1:end);
 	outfile = fullfile(folderPathLargeData,fileName);
 
 	if exist(outfile,'file') 
 		fprintf(1,'Already completed for %s \n', fileName);
+		saveTime = -1;
 	else
 		% Attempt to save results to a temp zip file
 		tempfile = fullfile(pwd,'tempDownloadOfDEM.zip');
 
 		try
-			tic
-			websave(tempfile, URLtoImport);
+
+			if 1==1
+				websave(tempfile, URLtoImport);
+			else
+				% Does not work
+				fcn_INTERNAL_downloadWithProgress(tempfile, URLtoImport);
+			end
+
 			saveTime = toc;
 			fprintf(1,'Success for %s (%.2f sec) \n', fileName, saveTime)
 
 			% Move temp file to permanent file
 			movefile(tempfile, outfile)
 
-		catch
-			fprintf(1,'Fail for %s \n', fileName);
+		catch ME
+			fprintf(1,'Fail for %s. Returned error: %s\n', fileName, ME.message);
+			saveTime = toc;
 		end
 
 	end
 end
+
+
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -229,20 +255,66 @@ end % Ends main function
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-% function INTERNAL_plot_circle(center_x, center_y, radius, color, linewidth)
+% %% fcn_INTERNAL_downloadWithProgress
+% function fcn_INTERNAL_downloadWithProgress(outFile, urlStr)
+% % Read the remote stream in chunks, get content length from the connection,
+% % update a waitbar or dialog.
+% url = java.net.URL(urlStr);
+% conn = url.openConnection();
+% conn.setRequestProperty('User-Agent','MATLAB');
+% total = conn.getContentLengthLong();
+% in = conn.getInputStream();
+% fos = java.io.FileOutputStream(outFile);
 % 
-% % Plot the center point
-% % plot(center_x,center_y,'ro','Markersize',22);
-% 
-% % Plot circle
-% angles = 0:0.01:2*pi;
-% x_circle = center_x + radius * cos(angles);
-% y_circle = center_y + radius * sin(angles);
-% plot(x_circle,y_circle,'-','color',color,'Linewidth',linewidth);
+% bsize = 8192*2^10;
+% buffer = zeros(1,bsize,'uint8');
+% nread = 0;
+% handle_bar = waitbar(0,'Downloading...');
+% try
+% 	while true
+% 		% read up to bsize bytes
+% 		bytesRead = in.read(buffer, 0, bsize);
+% 		if bytesRead == -1
+% 			break
+% 		end
+% 		% write to file
+% 		fos.write(buffer, 0, bytesRead);
+% 		nread = nread + bytesRead;
+% 		if total > 0
+% 			waitbar(double(nread)/double(total), handle_bar, sprintf('%.1f%%', 100*double(nread)/double(total)));
+% 		else
+% 			waitbar(0.5, handle_bar, sprintf('Read %d bytes', nread)); % unknown length
+% 		end
+% 		drawnow
+% 	end
+% catch ME
+% 	close(handle_bar)
+% 	in.close(); fos.close();
+% 	rethrow(ME)
 % end
+% close(handle_bar)
+% in.close();
+% fos.close();
+% end % Ends fcn_INTERNAL_downloadWithProgress
+
+%% fcn_INTERNAL_downloadWithProgress
+function fcn_INTERNAL_downloadWithProgress(outFile, urlStr)
+
+req = matlab.net.http.RequestMessage('GET');
+progressFn = @(bytesRead, totalBytes) fprintf(1, 'Downloaded %d / %d bytes (%.1f%%)\n', ...
+	bytesRead, totalBytes, 100*bytesRead/max(1,totalBytes));
+options = matlab.net.http.HTTPOptions('ProgressMonitor', progressFn);
+resp = req.send(urlStr, options);
+% Save body if needed:
+if resp.StatusCode == 200
+	fid = fopen(outFile,'w');
+	fwrite(fid, resp.Body.Data);
+	fclose(fid);
+end
+end
 
 
-%%%%%%%%%%%%
+%% fcn_INTERNAL_buildAndCheckFolderPathFromURL
 function folderPathLargeData = fcn_INTERNAL_buildAndCheckFolderPathFromURL(rootOfPath, thisURLPrefix, PASDA_URL_Prefix)
 
 % Given a URL, creates a folder structure that mirrors the URL
@@ -277,4 +349,4 @@ for ith_folder = 1:length(cellArrayOfFolders)
 		end
 	end
 end
-end
+end % Ends fcn_INTERNAL_buildAndCheckFolderPathFromURL

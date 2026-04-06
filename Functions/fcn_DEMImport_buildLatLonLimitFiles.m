@@ -1,4 +1,4 @@
-function [LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, varargin)
+function [LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, varargin)
 % fcn_DEMImport_buildLatLonLimitFiles  extracts the latitude and
 % longitude limits from the XML file listing of a DEM.
 %
@@ -13,8 +13,10 @@ function [LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathN
 %
 %      (OPTIONAL INPUTS)
 %
-%      flagIgnoreLoadFiles - if set to true, will ignore previously
-%      generated load files. Default is "false"
+%      flagIgnoreLoadFiles - if set to 1, will ignore previously
+%      generated load files. Default is "false" or 0, where it will load
+%      previously generated load files AND test existing files. A value of
+%      -1 will ignore existing files if load files are present.
 %
 %      figNum - a figure number to plot results. If set to -1,
 %      skips any input checking or debugging, no figures will be generated,
@@ -24,6 +26,12 @@ function [LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathN
 %
 %      LatLonLimits - the latitude and longitude limits of the DEM as given
 %      by [lat_low lat_high lon_low lon_high]
+%
+%      zipPaths - a string array of the paths used to obtain the LatLon
+%      limits
+%
+%      FtLimits - the feet limits of the DEM as given by [west east south
+%      north] 
 %
 % DEPENDENCIES:
 %
@@ -42,6 +50,14 @@ function [LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathN
 % 2026_03_21 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_buildLatLonLimitFiles
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
+%
+% 2026_03_21 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_buildLatLonLimitFiles
+%   % * Added ignore of all nan results
+%
+% 2026_04_03 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_buildLatLonLimitFiles
+%   % * Added -1 option for allowing ONLY file loads, if available
 
 % TO-DO:
 %
@@ -169,52 +185,69 @@ subfoldersInThisFolder = filesAndFoldersInThisFolder([filesAndFoldersInThisFolde
 
 % Check for previous limits
 limitsFileName = fullfile(rootPathName,'latlonLimitsThisBranch.mat');
-if exist(limitsFileName,'file') && ~flagIgnoreLoadFiles
-    load(limitsFileName,'LatLonLimits','zipPaths');
-else
+flagLimitsFileFound = false;
+if exist(limitsFileName,'file') && (flagIgnoreLoadFiles<=0)
+	vars = who('-file', limitsFileName);        % cell array of variable names in file
+	exists = ismember('LatLonLimits', vars) && ismember('FtLimits', vars) && ismember('zipPaths', vars);
+	if exists
+		load(limitsFileName,'LatLonLimits','FtLimits','zipPaths');
+		flagLimitsFileFound = true;
+	else
+		LatLonLimits = [];
+		FtLimits = [];
+		zipPaths = cell(1,1);
+	end
+else	
     LatLonLimits = [];
+	FtLimits = [];
     zipPaths = cell(1,1);
 end
 
 
 for ith_folder = 1:length(subfoldersInThisFolder)
-    thisFolderName = subfoldersInThisFolder(ith_folder).name;
+	thisFolderName = subfoldersInThisFolder(ith_folder).name;
 	subfolderPath = fullfile(rootPathName,thisFolderName);
-    if ~any(strcmp(rejectNames,thisFolderName)) && ~any(contains(subfolderPath,noContainNames),'all')
+	if ~any(strcmp(rejectNames,thisFolderName)) && ~any(contains(subfolderPath,noContainNames),'all')
 
-        [thisLatLonLimit,thisZipPath] = fcn_DEMImport_buildLatLonLimitFiles(subfolderPath, flagIgnoreLoadFiles, figNum);
+		[thisLatLonLimit,thisZipPath, thisFtLimit] = fcn_DEMImport_buildLatLonLimitFiles(subfolderPath, flagIgnoreLoadFiles, figNum);
 
-		[LatLonLimits, zipPaths] = fcn_INTERNAL_conditionallyAdd(LatLonLimits, zipPaths,thisLatLonLimit, thisZipPath);
+		if ~all(isnan(thisLatLonLimit),'all')
+			[LatLonLimits, zipPaths, FtLimits] = fcn_INTERNAL_conditionallyAdd(LatLonLimits, zipPaths, FtLimits, thisLatLonLimit, thisZipPath, thisFtLimit);
+		end
 
-    end
+	end
 end
 
 % Filter out directories from the list
 fileListFunctionsFolderNoDirectories = filesAndFoldersInThisFolder(~[filesAndFoldersInThisFolder.isdir]);
 
-% Loop through the files in the current folder, checking for XML files. If
-% one is found, process it to extract the lat and lon limits, and save the
-% results as well as the file path.
-for ith_file = 1:length(fileListFunctionsFolderNoDirectories)
-    thisFileName = fileListFunctionsFolderNoDirectories(ith_file).name;
-    if contains(thisFileName,'.zip')
-        fullZipPath = fullfile(rootPathName,thisFileName);
-		thisZipPath = extractAfter(fullZipPath,'LargeData');
-		fprintf(1,'\t Extracting and analyzing: %s\n',thisZipPath)
+if flagIgnoreLoadFiles==-1 && flagLimitsFileFound
+	% do nothing if load file found in this folder AND user set flag to -1
+else
+	% Loop through the files in the current folder, checking for XML files. If
+	% one is found, process it to extract the lat and lon limits, and save the
+	% results as well as the file path.
+	for ith_file = 1:length(fileListFunctionsFolderNoDirectories)
+		thisFileName = fileListFunctionsFolderNoDirectories(ith_file).name;
+		if contains(thisFileName,'.zip')
+			fullZipPath = fullfile(rootPathName,thisFileName);
+			thisZipPath = extractAfter(fullZipPath,'LargeData');
+			fprintf(1,'\t Extracting and analyzing: %s\n',thisZipPath)
 
-		thisLatLonLimit = fcn_DEMImport_extractLimitsFromZipFile(fullZipPath, -1);
+			[thisLatLonLimit, thisFtLimit] = fcn_DEMImport_extractLimitsFromZipFile(fullZipPath, -1);
 
-        if size(thisLatLonLimit,1)>1
-            error('several XML files were found in the same zip file?');
-        end
-        
-        [LatLonLimits, zipPaths] = fcn_INTERNAL_conditionallyAdd(LatLonLimits, zipPaths,thisLatLonLimit, thisZipPath);
+			if size(thisLatLonLimit,1)>1
+				error('several XML files were found in the same zip file?');
+			end
 
-    end
-end
+			[LatLonLimits, zipPaths, FtLimits] = fcn_INTERNAL_conditionallyAdd(LatLonLimits, zipPaths, FtLimits, thisLatLonLimit, thisZipPath, thisFtLimit);
 
-if ~isempty(LatLonLimits)
-    save(limitsFileName,'LatLonLimits','zipPaths');
+		end
+	end
+
+	if ~isempty(LatLonLimits)
+		save(limitsFileName,'LatLonLimits','zipPaths','FtLimits');
+	end
 end
 
 %% Plot the results (for debugging)?
@@ -250,7 +283,7 @@ if flag_do_plots && ~isempty(LatLonLimits)
 
 	thisFigureData = get(gcf,'UserData');
 
-	if isempty(thisFigureData)
+	if isempty(thisFigureData) || ~isvalid(thisFigureData.h_active) || ~isvalid(thisFigureData.h_inactive)
 		clear plotFormat
 		plotFormat.Color = 0.25*[1 1 1];
 		plotFormat.Marker = '.';
@@ -315,16 +348,16 @@ end % Ends main function
 
 
 %% fcn_INTERNAL_conditionallyAdd
-function [LatLonLimitsOut, zipPathsOut] = fcn_INTERNAL_conditionallyAdd(LatLonLimitsIn, zipPathsIn,thisLatLonLimit, thisZipPath)
+function [LatLonLimitsOut, zipPathsOut, FtLimitsOut] = fcn_INTERNAL_conditionallyAdd(LatLonLimitsIn, zipPathsIn, FtLimitsIn, thisLatLonLimit, thisZipPath, thisFtLimit)
 
 % For debugging
 if 1==0
 	if 1==0
 		tempSave = fullfile(pwd,'Data','test_fcn_INTERNAL_conditionallyAdd');
-		save(tempSave,'LatLonLimitsIn', 'zipPathsIn','thisLatLonLimit', 'thisZipPath');
+		save(tempSave,'LatLonLimitsIn', 'zipPathsIn','FtLimitsIn', 'thisLatLonLimit', 'thisZipPath','thisFtLimit');
 	end
 	tempSave = fullfile(pwd,'Data','test_fcn_INTERNAL_conditionallyAdd');
-	load(tempSave,'LatLonLimitsIn', 'zipPathsIn','thisLatLonLimit', 'thisZipPath');
+	load(tempSave,'LatLonLimitsIn', 'zipPathsIn','FtLimitsIn', 'thisLatLonLimit', 'thisZipPath','thisFtLimit');
 end
 
 allEmptyZipPathsIn = all(cellfun(@isempty, zipPathsIn));
@@ -335,10 +368,12 @@ end
 % Make sure that, if one is empty, other is also
 if allEmptyZipPathsIn && all(isnan(LatLonLimitsIn),'all')
 	LatLonLimitsIn = [];
+	FtLimitsIn = [];
 end
 
 zipPathsOut = zipPathsIn;
 LatLonLimitsOut = LatLonLimitsIn;
+FtLimitsOut = FtLimitsIn;
 
 if ~iscell(thisZipPath)
 	thisZipPath = {thisZipPath};
@@ -347,20 +382,24 @@ end
 allEmptyThisZipPath = all(cellfun(@isempty, thisZipPath));
 if allEmptyThisZipPath
 	LatLonLimitsOut = nan(1,4);
+	FtLimitsOut = nan(1,4);
 	return
 end
 
 for ith_path = 1:length(thisZipPath)
 	ithZipPath = thisZipPath{ith_path};
 	ithLatLonLimits = thisLatLonLimit(ith_path,:);
+	ithFtLimits = thisFtLimit(ith_path,:);
 	
 	matches = strcmp(zipPathsIn,ithZipPath);
 	if any(matches)
 		% Replace old data
 		LatLonLimitsOut(matches,:) = ithLatLonLimits;
+		FtLimitsOut(matches,:)     = ithFtLimits;
 		zipPathsOut{matches,1} = ithZipPath;
 	else
 		LatLonLimitsOut = [LatLonLimitsOut; ithLatLonLimits]; %#ok<AGROW>
+		FtLimitsOut = [FtLimitsOut; ithFtLimits];  %#ok<AGROW>
 		allEmpty = all(cellfun(@isempty, zipPathsOut));
 		if allEmpty
 			zipPathsOut{1,1} = ithZipPath;

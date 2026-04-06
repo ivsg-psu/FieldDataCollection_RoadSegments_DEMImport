@@ -87,78 +87,6 @@ flagIgnoreLoadFiles = false;
 
 
 
-
-%% Download DEMS
-
-%%%%%
-% USGS:
-
-% PA North 10K QL1: 
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Bare_Earth_DEM/PA_North_QL1/67001640PAN_QL1_BE_DEM.zip
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Intensity/PA_North_QL1/67001640PAN_QL1_Intensity.zip
-% SouthToNorth = 4400:100:6800
-% WestToEast = 1640:10:1690
-
-% DOWNLOADED on 03/13/2026
-% PA North 10K QL2: 
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Bare_Earth_DEM/PA_North/24002510PAN_BE_DEM.zip
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Intensity/PA_North/25002000PAN_Intensity.zip
-% SouthToNorth = 1900:100:6900
-% WestToEast = 1590:10:2810
-
-% PA North 5K QL1 - las cont
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Contours/PA_North_QL1/68001640PAN_SW_cont_QL1.zip
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/LAS/PA_North_QL1/68001640PAN_SW_LAS_QL1.zip
-% SouthToNorth = 1900:100:6800
-% WestToEast = 1640:10:1690
-
-% PA North 5K QL2 - las cont
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Contours/PA_North/68001640PAN_SW_cont.zip
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/LAS/PA_North/68001640PAN_SW_las.zip
-% SouthToNorth = 1900:100:6800
-% WestToEast = 1590:10:2810
-
-% PA South 10K QL2
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Bare_Earth_DEM/PA_South/59001670PAS_BE_DEM.zip
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Intensity/PA_South/59001670PAS_Intensity.zip
-% SouthToNorth = 1400:100:6200
-% WestToEast = 1660:10:2710
-
-% PA South 5K QL2 - las cont
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/Contours/PA_South/59001670PAS_NE_cont.zip
-% https://www.pasda.psu.edu/download/usgs/LiDAR2019/LAS/PA_South/59001670PAS_NE_las.zip
-% SouthToNorth = 1400:100:6200
-% WestToEast = 1660:10:2710
-
-%%%%%%%%%%%%%
-% PAMAP
-
-% PAMAP North 2006 - 2008
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2007/60000000/66001210PAN_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/CONT/North/2007/60000000/66001210PAN_cont.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/BL/North/2007/60000000/66001210PAN_bl.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/LAS/North/2007/60000000/66001210PAN.zip
-% SouthToNorth = 1600:100:7800
-% WestToEast = 1200:10:2810
-
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2007/70000000/78001420PAN_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2007/60000000/65002020PAN_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2007/50000000/52002070PAN_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2006/40000000/40001420PAN_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2006/30000000/30001900PAN_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2006/20000000/21001870PAN_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2008/20000000/23002290PAN_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2008/30000000/39002700PAN_dem.zip
-
-% PAMAP South 2006 - 2008
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/South/2006/60000000/64001200PAS_dem.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/CONT/South/2006/60000000/64001200PAS_cont.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/BL/South/2006/60000000/64001200PAS_bl.zip
-% https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/LAS/South/2006/60000000/64001200PAS.zip
-% SouthToNorth = 1400:100:6900
-% WestToEast = 1180:10:2810
-
-
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -178,12 +106,59 @@ flagIgnoreLoadFiles = false;
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-%% TEST case: This one returns nothing since there is no portion of the path in criteria
+%% TEST case: extract all LLA limits from pamap \\ pamap_lidar subfolder
 figNum = 20001;
-titleString = sprintf('TEST case: This one returns nothing since there is no portion of the path in criteria');
+titleString = sprintf('TEST case: extract all LLA limits from pamap \\ pamap_lidar subfolder');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
+fcn_plotRoad_plotLL([],[],figNum);
+set(gca,'MapCenter',[41.2545 -78.0122], 'ZoomLevel', 6.875); % Entire state
+
+% rootPathName = fullfile(pwd,'LargeData','download');
+% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000\';
+% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000';
+% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\';
+% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2007\30000000\';
+% rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\LAS\';
+% rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
+% rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\';
+
+rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\';
+% rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\';
+
+
+flagIgnoreLoadFiles = 1;
+
+% Call the function
+[LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+
+% sgtitle(titleString, 'Interpreter','none');
+% 
+% % Check variable types
+% assert(iscell(cell_array_of_lap_indices));
+% assert(iscell(cell_array_of_entry_indices));
+% assert(iscell(cell_array_of_exit_indices));
+% 
+% % Check variable sizes
+% Nlaps = 3;
+% assert(isequal(Nlaps,length(cell_array_of_lap_indices))); 
+% assert(isequal(Nlaps,length(cell_array_of_entry_indices))); 
+% assert(isequal(Nlaps,length(cell_array_of_exit_indices))); 
+% 
+% % Check variable values
+% % Are the laps starting at expected points?
+% assert(isequal(2,min(cell_array_of_lap_indices{1})));
+% assert(isequal(102,min(cell_array_of_lap_indices{2})));
+% assert(isequal(215,min(cell_array_of_lap_indices{3})));
+% 
+% % Are the laps ending at expected points?
+% assert(isequal(88,max(cell_array_of_lap_indices{1})));
+% assert(isequal(199,max(cell_array_of_lap_indices{2})));
+% assert(isequal(293,max(cell_array_of_lap_indices{3})));
+% 
+% % Make sure plot opened up
+% assert(isequal(get(gcf,'Number'),figNum));
 
 
 %% Fast Mode Tests

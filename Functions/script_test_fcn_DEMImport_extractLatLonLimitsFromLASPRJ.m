@@ -44,18 +44,21 @@ lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadS
 prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
 
 % Call the function
-LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (figNum));
+limitsLatLon = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(LatLonLimits));
+assert(isnumeric(limitsLatLon));
+assert(isnumeric(limitsFt));
 
 % Check variable sizes
-assert(isequal(size(LatLonLimits),[1 4]));
+assert(isequal(size(limitsLatLon),[1 4]));
+assert(isequal(size(limitsFt),[1 4]));
 
 % Check variable values
-assert(isequal(round(LatLonLimits,4),[40.3788   40.3862  -79.8856  -79.8759]));
+assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+assert(isequal(round(limitsFt/1E6,4),round([0.1900    0.2000    1.8900    1.9000],4)));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -116,16 +119,16 @@ lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadS
 prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
 
 % Call the function
-LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, ([]));
+limitsLatLon = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, ([]));
 
 % Check variable types
-assert(isnumeric(LatLonLimits));
+assert(isnumeric(limitsLatLon));
 
 % Check variable sizes
-assert(isequal(size(LatLonLimits),[1 4]));
+assert(isequal(size(limitsLatLon),[1 4]));
 
 % Check variable values
-assert(isequal(round(LatLonLimits,4),[40.3788   40.3862  -79.8856  -79.8759]));
+assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -141,16 +144,16 @@ lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadS
 prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
 
 % Call the function
-LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (-1));
+limitsLatLon = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (-1));
 
 % Check variable types
-assert(isnumeric(LatLonLimits));
+assert(isnumeric(limitsLatLon));
 
 % Check variable sizes
-assert(isequal(size(LatLonLimits),[1 4]));
+assert(isequal(size(limitsLatLon),[1 4]));
 
 % Check variable values
-assert(isequal(round(LatLonLimits,4),[40.3788   40.3862  -79.8856  -79.8759]));
+assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -173,7 +176,7 @@ Niterations = 2;
 tic;
 for ith_test = 1:Niterations
 	% Call the function
-	LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, ([]));
+	limitsLatLon = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, ([]));
 end
 slow_method = toc;
 
@@ -181,7 +184,7 @@ slow_method = toc;
 tic;
 for ith_test = 1:Niterations
 	% Call the function
-	LatLonLimits = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (-1));
+	limitsLatLon = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (-1));
 end
 fast_method = toc;
 

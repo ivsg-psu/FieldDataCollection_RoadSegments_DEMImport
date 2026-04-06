@@ -41,9 +41,10 @@ fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 % figure(figNum); clf;
 
 URLtoImport = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2007/30000000/38002090PAN_dem.zip';
+estimatedBytesPerSecond = [];
 
 % Call the function
-fcn_DEMImport_ImportZipFromURL(URLtoImport, (figNum));
+fcn_DEMImport_ImportZipFromURL(URLtoImport, (estimatedBytesPerSecond), (figNum));
 
 % sgtitle(titleString, 'Interpreter','none');
 % 

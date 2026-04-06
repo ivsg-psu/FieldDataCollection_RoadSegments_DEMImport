@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata xml:lang="en">
+   <Esri>
+      <CreaDate>20200210</CreaDate>
+      <CreaTime>12085300</CreaTime>
+      <ArcGISFormat>1.0</ArcGISFormat>
+      <SyncOnce>TRUE</SyncOnce>
+      <DataProperties>
+         <lineage>
+            <Process Date="20200210" Time="120853"
+                     ToolSource="c:\program files (x86)\arcgis\desktop10.7\ArcToolbox\Toolboxes\3D Analyst Tools.tbx\HillShade">HillShade C:\sbd\TEST1\Matt_Reynolds\PAMAP_DEM_mosaic_Northampton_1m.tif C:\sbd\TEST1\Matt_Reynolds\PAMAP_hillshade_mosaic_Northampton_1m.tif 315 45 NO_SHADOWS 1</Process>
+         </lineage>
+      </DataProperties>
+   </Esri>
+</metadata>

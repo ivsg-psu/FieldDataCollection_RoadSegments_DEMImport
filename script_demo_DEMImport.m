@@ -30,14 +30,25 @@
 % - In fcn_DEMImport_ImportDEMsFromPAMAP
 %   % * Changed root definition to start at "download" to match, exactly,
 %   %   % pasda website
-
+%
+% 2026_03_31 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_ImportZipFromURL
+%   % * Wrote the code originally, using breakDataIntoLaps as starter
+%
+% 2026_04_02 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_ImportZipFromURL
+%   % * Added estimated completion time as input, actual time as output
+%   % * Added error reporting
+%
+% 2026_04_02 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
+%   % * Wrote the code originally, using script_test_scrapeDirectory as starter
 
 % TO-DO:
-% - 2025_11_12 by Sean Brennan, sbrennan@psu.edu
-%   % * Main code runs, but could use some better outputs to workspace via
-%   %   % fprintf.
-%   % * Not the greatest money plot outputs in main script - these could
-%   %   % be more clear.
+%
+% 2026_04_02 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
+%   % * Move fcn_INTERNAL_timeStringFromSeconds into DebugTools
 
 
 %% Make sure we are running out of root directory
@@ -163,6 +174,50 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 disp('Welcome to the demo code for the DEMImport library!')
+
+%% DEMO case: scrape PASDA directory (takes about 30 minutes)
+figNum = 10001;
+titleString = sprintf('DEMO case: scrape PASDA directory (takes about 30 minutes)');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+% figure(figNum); clf;
+
+if 1==0
+	% Call the function
+	fcn_DEMImport_scrapePASDA(-1)
+end
+
+%% DEMO case: load pamap (9 TB - takes about 4 days)
+figNum = 10001;
+titleString = sprintf('DEMO case: load pamap (9 TB - takes about 4 days)');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+% figure(figNum); clf;
+
+if ~exist('scrapeDirectoryResultPASDA','var')
+	saveFileName = fullfile(pwd,'Data','scrapeDirectoryResultPASDA.mat');
+	if exist(saveFileName,'file')
+		load(saveFileName,'scrapeDirectoryResultPASDA');
+	else
+		error('Unable to find load file for directory scrape: %s',saveFileName);
+	end
+end
+
+dataStringToExtract = 'pamap';
+
+% Call the function
+fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+
+
+%% DEMO case: load 38002090PAN_dem.zip
+figNum = 10001;
+titleString = sprintf('DEMO case: load entire PAMAP database');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+% figure(figNum); clf;
+
+URLtoImport = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2007/30000000/38002090PAN_dem.zip';
+estimatedBytesPerSecond = [];
+
+% Call the function
+fcn_DEMImport_ImportZipFromURL(URLtoImport, (estimatedBytesPerSecond), (figNum));
 
 
 
