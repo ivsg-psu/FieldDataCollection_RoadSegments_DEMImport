@@ -219,7 +219,15 @@ estimatedBytesPerSecond = [];
 % Call the function
 fcn_DEMImport_ImportZipFromURL(URLtoImport, (estimatedBytesPerSecond), (figNum));
 
+%%
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+kFtLimits = round(FtLimits./[100 100 1000 1000]);
+pamap_lidar_table = table(LatLonLimits,kFtLimits,zipPaths);
 
+queryLatLon = [40.7142 -78.38];
+
+possibleDataSources = LatLonLimits(:,1)<=queryLatLon(1,1) & LatLonLimits(:,2)>queryLatLon(1,1) & LatLonLimits(:,3)<=queryLatLon(1,2) & LatLonLimits(:,4)>queryLatLon(1,2);
+zipPaths(possibleDataSources)
 
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
