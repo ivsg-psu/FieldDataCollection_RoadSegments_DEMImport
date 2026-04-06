@@ -187,7 +187,7 @@ if 1==0
 end
 
 %% DEMO case: load pamap (9 TB - takes about 4 days)
-figNum = 10001;
+figNum = 10002;
 titleString = sprintf('DEMO case: load pamap (9 TB - takes about 4 days)');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 % figure(figNum); clf;
@@ -203,13 +203,15 @@ end
 
 dataStringToExtract = 'pamap';
 
-% Call the function
-fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+warning('This function takes DAYS to run and requires an external attached drive with at least 10 TB of free space! You must manually edit this code to FORCE the operation to occur.')
+if 1==0
+	% Call the function
+	fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+end
 
-
-%% DEMO case: load 38002090PAN_dem.zip
-figNum = 10001;
-titleString = sprintf('DEMO case: load entire PAMAP database');
+%% DEMO case: load 38002090PAN_dem.zip directly from the PASDA website
+figNum = 10003;
+titleString = sprintf('DEMO case: load 38002090PAN_dem.zip directly from the PASDA website');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 % figure(figNum); clf;
 
@@ -219,7 +221,38 @@ estimatedBytesPerSecond = [];
 % Call the function
 fcn_DEMImport_ImportZipFromURL(URLtoImport, (estimatedBytesPerSecond), (figNum));
 
-%%
+%% DEMO: process ALL data scraped under pamap_lidar folder
+% This cycles through all downloaded data and builds a database of "limits"
+% in latlong and in "foot" or ft coordinates (which are used by PASDA). To
+% do this, it finds EVERY zip file, unzips it, scans the results for XML
+% files, scrapes the XML files to determine if LLA limits and/or Ft limits
+% are specified in the XML. For XML files that "fail" to be scanned, it
+% puts the results into "XMLsWithProblems" folder.
+% This process takes about 8 to 12 hours to complete.
+
+figNum = 10004;
+titleString = sprintf('DEMO case: process ALL data scraped under pamap_lidar folder');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+fcn_plotRoad_plotLL([],[],figNum);
+set(gca,'MapCenter',[41.2545 -78.0122], 'ZoomLevel', 6.875); % Entire state
+
+% Change this folder to match the one on the external drive
+rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\';
+
+% Flag is set to 1 to FORCE all files to be scanned, ignoring existing load
+% files
+flagIgnoreLoadFiles = 1;
+
+warning('This function takes 8 HOURS to run and requires an external attached drive with roughly 10 TB of PASDA data downloaded (see previous steps). You must manually edit this code to FORCE the operation to occur.')
+if 1==0
+	% Call the function
+	[LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+end
+
+%% DEMO: show how to pull out zip locations
+% After the data is scraped, query it. 
 pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
 kFtLimits = round(FtLimits./[100 100 1000 1000]);
 pamap_lidar_table = table(LatLonLimits,kFtLimits,zipPaths);
@@ -227,7 +260,21 @@ pamap_lidar_table = table(LatLonLimits,kFtLimits,zipPaths);
 queryLatLon = [40.7142 -78.38];
 
 possibleDataSources = LatLonLimits(:,1)<=queryLatLon(1,1) & LatLonLimits(:,2)>queryLatLon(1,1) & LatLonLimits(:,3)<=queryLatLon(1,2) & LatLonLimits(:,4)>queryLatLon(1,2);
-zipPaths(possibleDataSources)
+
+
+pathsToFilesContainingHeightData = zipPaths(possibleDataSources);
+fprintf(1,'\n\n Here are all the files (DEMs, Breaklines, Contours, etc.) that contain the above query location:\n');
+disp(pathsToFilesContainingHeightData);
+
+flagsPathsToDEMs = contains(pathsToFilesContainingHeightData,'\DEM\');
+pathsToDEMs = pathsToFilesContainingHeightData(flagsPathsToDEMs);
+fprintf(1,'\n\n Here are the DEMs that contain the above query location:\n');
+disp(pathsToDEMs);
+
+
+%% Extract height (need to functionalize script below with inputs: zip file name and path, LatLonLimits, and query
+script_test_DEM_load_plot_interpolate
+
 
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

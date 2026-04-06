@@ -13,10 +13,16 @@ function [LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles
 %
 %      (OPTIONAL INPUTS)
 %
-%      flagIgnoreLoadFiles - if set to 1, will ignore previously
-%      generated load files. Default is "false" or 0, where it will load
-%      previously generated load files AND test existing files. A value of
-%      -1 will ignore existing files if load files are present.
+%      flagIgnoreLoadFiles - if set to:
+%
+%         1, will ignore previously generated load files and ONLY process
+%         existing files 
+%
+%         0, default, will load previously generated load files AND load
+%         existing files, keeping results of both
+%
+%        -1 will ONLY load previous load files and ignore existing files if
+%        load files are present.
 %
 %      figNum - a figure number to plot results. If set to -1,
 %      skips any input checking or debugging, no figures will be generated,

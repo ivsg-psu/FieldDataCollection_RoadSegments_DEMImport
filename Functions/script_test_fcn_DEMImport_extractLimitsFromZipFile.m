@@ -133,6 +133,68 @@ assert(isequal(round(limitsFt/1E6,4),round([0.1300    0.3300    2.1300    2.4000
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
 
+
+%% TEST case: Test with -2 option to avoid deleting extraction directory
+figNum = 20002;
+titleString = sprintf('TEST case: Test with -2 option to avoid deleting extraction directory');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Remove tmpFolder if it is there
+tmpFolder = fullfile(pwd,'TempExtract');
+if exist(tmpFolder,'dir')
+	rmdir(tmpFolder, 's');
+end
+
+% Grab a zip file to use for testing
+thisURL = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2006/20000000/21001790PAN_dem.zip';
+
+% Define a file name and directory to save results
+lasDirectory = fullfile(pwd,'LargeData','zipTestFiles_LAS');
+fcn_DebugTools_makeDirectory(lasDirectory);
+zipFile = fullfile(lasDirectory,'21001790PAN_dem.zip');
+if ~exist(zipFile,'file')
+	try
+		tic
+		websave(zipFile, thisURL);
+		saveTime = toc;
+		fprintf(1,'\tSaved temp file %s  in %.2f seconds \t', zipFile, saveTime)
+	catch
+		fprintf(1,'Unable to download file: %s \t', tempfile);
+		error('Unable to continue!');
+	end
+end
+
+
+% Call the function
+[limitsLatLon, limitsFt] = fcn_DEMImport_extractLimitsFromZipFile(zipFile, -2);
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Show that the temp folder is now there (was NOT deleted!)
+assert(exist(tmpFolder,'dir'))
+
+% Remove tmpFolder if it is there to avoid it being added to repo
+tmpFolder = fullfile(pwd,'TempExtract');
+if exist(tmpFolder,'dir')
+	rmdir(tmpFolder, 's');
+end
+
+% Check variable types
+assert(isnumeric(limitsLatLon));
+assert(isnumeric(limitsFt));
+
+% Check variable sizes
+assert(isequal(size(limitsLatLon),[1 4]));
+assert(isequal(size(limitsFt),[1 4]));
+
+% Check variable valueslimit
+assert(isequal(round(limitsLatLon,4),[40.7138   40.7414  -78.3941  -78.3578]));
+assert(isequal(round(limitsFt/1E6,4),round([0.2000    0.2100    1.7900    1.8000],4)));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

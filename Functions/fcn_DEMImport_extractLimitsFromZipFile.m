@@ -14,6 +14,8 @@ function [limitsLatLon, limitsFt] = fcn_DEMImport_extractLimitsFromZipFile(zipFi
 %      figNum - a figure number to plot results. If set to -1,
 %      skips any input checking or debugging, no figures will be generated,
 %      and sets up code to maximize speed.
+%      NOTE: if figNum is set to -2, the extract directory is NOT deleted.
+%      This is useful for debugging
 %
 % OUTPUTS:
 %
@@ -146,7 +148,9 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         figNum = temp; 
-        flag_do_plots = 1;
+		if figNum>0
+			flag_do_plots = 1;
+		end
     end
 end
 
@@ -208,7 +212,7 @@ elseif flagPRJWasFound
 	lasFilePath = cat(2,prefix,'.las');
 
 	[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilePath, prjFilePath,-1);
-	
+
 elseif flagMDBWasFound
 	% 'mdb' is a microsoft database file - this is just a listing of files.
 	% No LLA data is contained here
@@ -224,7 +228,9 @@ else
 end
 
 % Ensure cleanup on function exit
-rmdir(tmpFolder, 's');
+if figNum~=-2
+	rmdir(tmpFolder, 's');
+end
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
