@@ -43,6 +43,10 @@
 % 2026_04_02 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
 %   % * Wrote the code originally, using script_test_scrapeDirectory as starter
+% 
+% 2026_04_07 by Aneesh Batchu, abb6486@psu.edu
+% - In script_test_DEM_load_plot_interpolate2
+%   % * Wrote this code originally
 
 % TO-DO:
 %
@@ -254,10 +258,17 @@ end
 %% DEMO: show how to pull out zip locations
 % After the data is scraped, query it. 
 pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+load(pamap_lidar_limitsFile);
+
 kFtLimits = round(FtLimits./[100 100 1000 1000]);
 pamap_lidar_table = table(LatLonLimits,kFtLimits,zipPaths);
 
-queryLatLon = [40.7142 -78.38];
+% queryLatLon = [40.7142 -78.38];
+
+reference_latitude = 40.86368573;
+reference_longitude = -77.83592832;
+
+queryLatLon = [reference_latitude reference_longitude];
 
 possibleDataSources = LatLonLimits(:,1)<=queryLatLon(1,1) & LatLonLimits(:,2)>queryLatLon(1,1) & LatLonLimits(:,3)<=queryLatLon(1,2) & LatLonLimits(:,4)>queryLatLon(1,2);
 
