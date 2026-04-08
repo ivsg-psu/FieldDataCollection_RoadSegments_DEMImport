@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <metadata>
   <Esri>
-      <CreaDate>20070518</CreaDate>
-      <CreaTime>07103600</CreaTime>
+      <CreaDate>20070615</CreaDate>
+      <CreaTime>14240400</CreaTime>
       <SyncOnce>FALSE</SyncOnce>
-      <ModDate>20070518</ModDate>
-      <ModTime>07103700</ModTime>
-      <MetaID>{84EFF3FD-2567-4582-BD1C-E60054008385}</MetaID>
-      <SyncDate>20070518</SyncDate>
-      <SyncTime>07103700</SyncTime>
+      <ModDate>20070615</ModDate>
+      <ModTime>14240400</ModTime>
+      <MetaID>{D5D006E1-5508-454D-BEAF-3ABADA8D0FEE}</MetaID>
+      <SyncDate>20070615</SyncDate>
+      <SyncTime>14240400</SyncTime>
   </Esri>
   <idinfo>
       <ptcontac>
@@ -34,13 +34,13 @@
       <citation>
          <citeinfo>
             <origin>PAMAP Program, PA Department of Conservation and Natural Resources, Bureau of Topographic and Geologic Survey</origin>
-            <pubdate>20070518</pubdate>
+            <pubdate>20070615</pubdate>
             <title>PAMAP Program 3.2 ft Digital Elevation Model of Pennsylvania</title>
             <pubinfo>
                <pubplace>Middletown, PA</pubplace>
                <publish>PAMAP Program, PA Department of Conservation and Natural Resources, Bureau of Topographic and Geologic Survey</publish>
             </pubinfo>
-            <ftname Sync="TRUE">21001790PAN_dem.tif</ftname>
+            <ftname Sync="TRUE">26001940PAN_dem.tif</ftname>
             <geoform Sync="TRUE">remote-sensing image</geoform>
          </citeinfo>
       </citation>
@@ -57,7 +57,6 @@
             <placekey>Pennsylvania</placekey>
             <placekey>Centre County</placekey>
             <placekey>Clearfield County</placekey>
-            <placekey>Jefferson County</placekey>
          </place>
       </keywords>
       <descript>
@@ -69,7 +68,7 @@
          <timeinfo>
             <rngdates>
                <begdate>20060426</begdate>
-               <enddate>20060429</enddate>
+               <enddate>20060428</enddate>
             </rngdates>
             <sngdate>
         </sngdate>
@@ -82,16 +81,16 @@
       </status>
       <spdom>
          <bounding>
-            <westbc Sync="TRUE">-78.394137</westbc>
-            <eastbc Sync="TRUE">-78.357799</eastbc>
-            <northbc Sync="TRUE">40.741410</northbc>
-            <southbc Sync="TRUE">40.713765</southbc>
+            <westbc Sync="TRUE">-77.853062</westbc>
+            <eastbc Sync="TRUE">-77.816872</eastbc>
+            <northbc Sync="TRUE">40.880247</northbc>
+            <southbc Sync="TRUE">40.852773</southbc>
          </bounding>
          <lboundng>
-            <leftbc Sync="TRUE">1790000.000000</leftbc>
-            <rightbc Sync="TRUE">1800000.000000</rightbc>
-            <bottombc Sync="TRUE">200000.000000</bottombc>
-            <topbc Sync="TRUE">210000.000000</topbc>
+            <leftbc Sync="TRUE">1940000.000000</leftbc>
+            <rightbc Sync="TRUE">1950000.000000</rightbc>
+            <bottombc Sync="TRUE">250000.000000</bottombc>
+            <topbc Sync="TRUE">260000.000000</topbc>
          </lboundng>
       </spdom>
       <useconst>The Originator, Publisher and Distributor exclude any and all implied warranties and make no warranty or representation with respect to the data files or accompanying documentation, including quality, performance, merchantability or fitness for a particular purpose. These data files and documentation are provided 'as is' and the User assumes the entire risk as to their quality and performance.  The Originator and Publisher, as indicated in the metadata, should be clearly cited in any product derived from this data. Any modifications to this data must be described in any digital or hardcopy product derived from this data.</useconst>
@@ -109,19 +108,19 @@
          </procstep>
          <procstep>
             <procdesc>Aerial photography utilizing airborne GPS techniques was acquired with 60% forward overlap and 30% sidelap at an altitude of 9600' AMT producing a negative scale of 1" = 1600'.  Aerial photography was exposed on color negative aerial film.</procdesc>
-            <procdate>2060427</procdate>
+            <procdate>20060419</procdate>
             <srcprod>Aerial Photography</srcprod>
          </procstep>
          <procstep>
             <procdesc>Softcopy aerotriangulation utilizes the GPS ground control, airborne GPS data, and image coordinate measurements which are run through bundle block adjustment software computing the exterior orientation parameters for each image of the photogrammetric project.  The original aerial film was scanned utilizing a precision photogrammetric scanner at a resolution of 12.5 microns.  Using these scans the aerotriangulation process employs a rigorous mathematical model which detects measurement errors, and corrects for systematic image distorion, film shrikage, atmospheric refraction and camera lens distortions.  The final bundle adjustment results are inspected to ensure that the RMSE meets the required 1 part in 10000.</procdesc>
             <srcused>GPS Ground Control</srcused>
-            <procdate>20061115</procdate>
+            <procdate>20070131</procdate>
             <srcprod>Analytical Aerotriangulation</srcprod>
             <srcused>Aerial Photography</srcused>
          </procstep>
          <procstep>
             <procdesc>LiDAR collection and processing generally adhered to FEMA Guidelines and Specifications for Flood Hazard Mapping Partners, Appendix A: Guidance for Aerial Mapping &amp; Surveying, Section A.8: Airborne Light Detection and Ranging (LiDAR) Surveys.  Raw LiDAR data was collected using a sensor equipped with an airborne GPS/IMU system.  Flight lines with a 30% sidelap were flown with a nominal average LiDAR point spacing of 1.4 meters using a 43 degree field of view (full angle) at a laser pulse rate of 40.6 kHz.  The raw LiDAR data is processed and filtered to remove LiDAR points on elevated features such as vegetation, buildings, cars, etc. in order to create a bare earth surface meeting the accuracies required for orthophoto and contour generation.  </procdesc>
-            <procdate>20070205</procdate>
+            <procdate>20070219</procdate>
             <srcprod>Processed LiDAR</srcprod>
             <srcused>Raw LiDAR</srcused>
             <srcused>GPS Ground Control</srcused>
@@ -129,14 +128,14 @@
          <procstep>
             <procdesc>To supplement the LiDAR data, photogrammetrically compiled breaklines are collected along various planimetric features and significant breaks in grade.  The processed LiDAR data is combined and integrated with these breaklines to generate a final terrain surface of the project area.  This surface was then used to support the accurate generation of the orthophotos and 2' contours.</procdesc>
             <srcused>Aerial Photography</srcused>
-            <procdate>20070206</procdate>
+            <procdate>20070220</procdate>
             <srcprod>DEM</srcprod>
             <srcused>Analytical Aerotriangulation</srcused>
             <srcused>Processed LiDAR</srcused>
          </procstep>
          <procstep>
             <procdesc>The final terrain surface was used in creating an ASCII point grid.  The ASCII grid file contains the X, Y, and Z coordinates and is output with a 3.2 feet (approximately 1 meter) spacing between points.  The ASCII grid is converted to an ESRI raster grid and then into GeoTIFF format.</procdesc>
-            <procdate>20070517</procdate>
+            <procdate>20070615</procdate>
             <srcprod>ESRI Raster Grid</srcprod>
             <srcused>DEM</srcused>
          </procstep>
@@ -165,7 +164,7 @@
                <citeinfo>
                   <title>Color Aerial Photography</title>
                   <geoform>remote-sensing image</geoform>
-                  <pubdate>20060427</pubdate>
+                  <pubdate>20060419</pubdate>
                   <origin>Photo Science, Inc.</origin>
                </citeinfo>
             </srccite>
@@ -177,7 +176,7 @@
                <timeinfo>
                   <rngdates>
                      <begdate>20060409</begdate>
-                     <enddate>20060427</enddate>
+                     <enddate>20060419</enddate>
                   </rngdates>
                </timeinfo>
                <srccurr>ground condition</srccurr>
@@ -188,7 +187,7 @@
                <citeinfo>
                   <title>LiDAR</title>
                   <origin>Photo Science, Inc.</origin>
-                  <pubdate>20060429</pubdate>
+                  <pubdate>20060428</pubdate>
                </citeinfo>
             </srccite>
             <typesrc>disc</typesrc>
@@ -196,7 +195,7 @@
                <timeinfo>
                   <rngdates>
                      <begdate>20060426</begdate>
-                     <enddate>20060429</enddate>
+                     <enddate>20060428</enddate>
                   </rngdates>
                </timeinfo>
                <srccurr>ground condition</srccurr>
@@ -206,9 +205,9 @@
          </srcinfo>
          <procstep>
             <procdesc Sync="TRUE">Metadata imported.</procdesc>
-            <srcused Sync="TRUE">D:\metadata\723_Block5\Raster_DEM_North\metadata.xml</srcused>
-            <date Sync="TRUE">20070518</date>
-            <time Sync="TRUE">07103600</time>
+            <srcused Sync="TRUE">D:\metadata\723_Block6\Raster_DEM\metadata.xml</srcused>
+            <date Sync="TRUE">20070615</date>
+            <time Sync="TRUE">14240400</time>
          </procstep>
       </lineage>
       <attracc>
@@ -233,7 +232,7 @@ See the PAMAP Technical Proposal dated January 11, 2006 for further QA/QC proced
       </posacc>
   </dataqual>
   <metainfo>
-      <metd Sync="TRUE">20070518</metd>
+      <metd Sync="TRUE">20070615</metd>
       <metc>
          <cntinfo>
             <cntaddr>
@@ -262,7 +261,7 @@ See the PAMAP Technical Proposal dated January 11, 2006 for further QA/QC proced
          <metprof Sync="TRUE">ESRI Metadata Profile</metprof>
       </metextns>
   </metainfo>
-  <mdDateSt Sync="TRUE">20070518</mdDateSt>
+  <mdDateSt Sync="TRUE">20070615</mdDateSt>
   <distinfo>
       <distrib>
          <cntinfo>
@@ -362,7 +361,7 @@ See the PAMAP Technical Proposal dated January 11, 2006 for further QA/QC proced
       </languageCode>
       </dataLang>
       <idCitation>
-         <resTitle Sync="TRUE">21001790PAN_dem.tif</resTitle>
+         <resTitle Sync="TRUE">26001940PAN_dem.tif</resTitle>
          <presForm>
             <PresFormCd Sync="TRUE" value="005">
         </PresFormCd>
@@ -375,19 +374,19 @@ See the PAMAP Technical Proposal dated January 11, 2006 for further QA/QC proced
       <dataExt>
          <geoEle>
             <GeoBndBox esriExtentType="native">
-               <westBL Sync="TRUE">1790000</westBL>
-               <eastBL Sync="TRUE">1800000</eastBL>
-               <northBL Sync="TRUE">210000</northBL>
-               <southBL Sync="TRUE">200000</southBL>
+               <westBL Sync="TRUE">1940000</westBL>
+               <eastBL Sync="TRUE">1950000</eastBL>
+               <northBL Sync="TRUE">260000</northBL>
+               <southBL Sync="TRUE">250000</southBL>
                <exTypeCode Sync="TRUE">1</exTypeCode>
             </GeoBndBox>
          </geoEle>
       </dataExt>
       <geoBox esriExtentType="decdegrees">
-         <westBL Sync="TRUE">-78.394137</westBL>
-         <eastBL Sync="TRUE">-78.357799</eastBL>
-         <northBL Sync="TRUE">40.74141</northBL>
-         <southBL Sync="TRUE">40.713765</southBL>
+         <westBL Sync="TRUE">-77.853062</westBL>
+         <eastBL Sync="TRUE">-77.816872</eastBL>
+         <northBL Sync="TRUE">40.880247</northBL>
+         <southBL Sync="TRUE">40.852773</southBL>
          <exTypeCode Sync="TRUE">1</exTypeCode>
       </geoBox>
   </dataIdInfo>
@@ -410,7 +409,7 @@ See the PAMAP Technical Proposal dated January 11, 2006 for further QA/QC proced
       <distributor>
          <distorTran>
             <onLineSrc>
-               <linkage Sync="TRUE">file://\\10.40.16.214\ifs\data\Proj_723_PAMAP_2006\LiDAR\Complete\Block5_Complete\North_Complete\DEM\21001790PAN_dem.tif</linkage>
+               <linkage Sync="TRUE">file://\\10.40.16.214\ifs\data\Proj_723_PAMAP_2006\LiDAR\Complete\Block6_Complete\DEM\26001940PAN_dem.tif</linkage>
                <protocol Sync="TRUE">Local Area Network</protocol>
                <orDesc Sync="TRUE">002</orDesc>
             </onLineSrc>
