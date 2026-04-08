@@ -47,6 +47,12 @@
 % 2026_04_07 by Aneesh Batchu, abb6486@psu.edu
 % - In script_test_DEM_load_plot_interpolate2
 %   % * Wrote this code originally
+% 
+% 2026_04_07 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_DEM_load_plot_interpolate2
+%   % * Added geoid correction to LLA hand-measured data to show that this
+%   %   % causes the DEM query result to match, exactly, the test track
+%   %   % results
 
 % TO-DO:
 %

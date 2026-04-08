@@ -6,6 +6,12 @@
 % 2026_04_07 by Aneesh Batchu, abb6486@psu.edu
 % - In script_test_DEM_load_plot_interpolate2
 %   % * Wrote this code originally
+% 
+% 2026_04_07 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_DEM_load_plot_interpolate2
+%   % * Added geoid correction to LLA hand-measured data to show that this
+%   %   % causes the DEM query result to match, exactly, the test track
+%   %   % results
 
 
 %% Load some data 
@@ -138,7 +144,9 @@ LLAdata = 10^2*[ ...
     0.408625977026710  -0.778369593792802   3.322871838456281 ];
 
 LLdata = LLAdata(:,1:2);
-trueAltitude_InMeters = LLAdata(:,3);
+geoidHeight = egm96geoid(LLAdata(:,1), LLAdata(:,2));
+LLAdata(:,3) = LLAdata(:,3) - geoidHeight; % Convert from ellipsoid height to sea level height
+trueAltitude_InMeters = LLAdata(:,3) ;
 
 %% Plot track points in lat/lon
 clear plotFormat
@@ -279,6 +287,7 @@ plot3(trackTrue_ENU(:,1), trackTrue_ENU(:,2), trackTrue_ENU(:,3), ...
 plot3(trackDEM_ENU(:,1), trackDEM_ENU(:,2), trackDEM_ENU(:,3), ...
     'g.-', 'LineWidth', 2, 'MarkerSize', 18);
 
+% axis equal;
 xlabel('East [m]');
 ylabel('North [m]');
 zlabel('Up [m]');
@@ -299,7 +308,7 @@ plot3(trackTrue_ENU(:,1), trackTrue_ENU(:,2), trackTrue_ENU(:,3), ...
 plot3(trackDEM_ENU(:,1), trackDEM_ENU(:,2), trackDEM_ENU(:,3), ...
     'b.-', 'LineWidth', 2, 'MarkerSize', 18);
 
-
+axis equal
 xlabel('East [m]');
 ylabel('North [m]');
 zlabel('Up [m]');
