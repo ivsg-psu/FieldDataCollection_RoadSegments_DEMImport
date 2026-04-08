@@ -207,9 +207,15 @@ disp(difference_InMeters);
 
 resultsMatrix = [LLdata, trueAltitude_InMeters, DEM_altitudeInMeters, difference_InMeters];
 
-fprintf(1,'Results matrix:\n');
-fprintf(1,'   Latitude        Longitude        TrueAlt(m)     DEMAlt(m)      Diff(m)\n');
-disp(resultsMatrix);
+% fprintf(1,'Results matrix:\n');
+% fprintf(1,'   Latitude        Longitude        TrueAlt(m)     DEMAlt(m)      Diff(m)\n');
+% disp(resultsMatrix);
+
+header_strings = [{'Latitude'}, {'Longitude'},{'TrueAlt(m)'},{' DEMAlt(m)'},{'Diff(m)'}]; % Headers for each column
+formatter_strings = [{'%.12f'},{'%.12f'},{'%.4f'},{'%.4f'},{'%.4f'}]; % How should each column be printed?
+numChars = [15, 15, 15, 15, 15]; % Specify spaces for each column
+fcn_DebugTools_debugPrintTableToNCharacters(resultsMatrix, header_strings, formatter_strings,numChars);
+
 
 %% Convert true track to ENU
 trackTrue_ENU = gps_object.WGSLLA2ENU( ...
@@ -332,7 +338,7 @@ ylabel('North [m]');
 zlabel('Up [m]');
 title('Top view: DEM patch and track');
 grid on;
-axis equal;
+% axis equal;
 view(2);
 colorbar;
 legend('DEM patch','True track','DEM-sampled track','Start point','Location','best');

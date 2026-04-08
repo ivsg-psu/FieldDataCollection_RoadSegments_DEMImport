@@ -264,7 +264,30 @@ end
 %% DEMO: show how to pull out zip locations
 % After the data is scraped, query it. 
 pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
-load(pamap_lidar_limitsFile);
+
+
+if 1==0
+	% Do dumb load
+	load(pamap_lidar_limitsFile);
+else
+	% Do smart load, one variable at a time with warnings
+
+	matlabFileObject = matfile(pamap_lidar_limitsFile);        % returns matlab.io.MatFile object
+	vars = who(matlabFileObject);             % variable names in the file (no full load)
+	expectedVariables = {'FtLimits', 'LatLonLimits', 'zipPaths'};
+
+	for ith_expectedVariable = 1:length(expectedVariables)
+		thisExpectedVariable = expectedVariables{ith_expectedVariable};
+		% Read a variable only if it exists
+		if ismember(thisExpectedVariable, vars)
+			% loads only that variable/part
+			commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);',thisExpectedVariable);
+			eval(commandString);
+		else
+			warning('Variable %s not found in the limits file: %s.', thisExpectedVariable, pamap_lidar_limitsFile);
+		end
+	end
+end
 
 kFtLimits = round(FtLimits./[100 100 1000 1000]);
 pamap_lidar_table = table(LatLonLimits,kFtLimits,zipPaths);
@@ -274,20 +297,24 @@ pamap_lidar_table = table(LatLonLimits,kFtLimits,zipPaths);
 reference_latitude = 40.86368573;
 reference_longitude = -77.83592832;
 
-queryLatLon = [reference_latitude reference_longitude];
+% queryLatLon = [reference_latitude reference_longitude];
 
-possibleDataSources = LatLonLimits(:,1)<=queryLatLon(1,1) & LatLonLimits(:,2)>queryLatLon(1,1) & LatLonLimits(:,3)<=queryLatLon(1,2) & LatLonLimits(:,4)>queryLatLon(1,2);
+queryLatLon = [40.7142 -78.38];
+
+flagOfPossibleDataSources = LatLonLimits(:,1)<=queryLatLon(1,1) & LatLonLimits(:,2)>queryLatLon(1,1) & LatLonLimits(:,3)<=queryLatLon(1,2) & LatLonLimits(:,4)>queryLatLon(1,2);
 
 
-pathsToFilesContainingHeightData = zipPaths(possibleDataSources);
+pathsToFilesContainingHeightData = zipPaths(flagOfPossibleDataSources);
 fprintf(1,'\n\n Here are all the files (DEMs, Breaklines, Contours, etc.) that contain the above query location:\n');
 disp(pathsToFilesContainingHeightData);
 
+% Show how to do a sub-query
 flagsPathsToDEMs = contains(pathsToFilesContainingHeightData,'\DEM\');
 pathsToDEMs = pathsToFilesContainingHeightData(flagsPathsToDEMs);
 fprintf(1,'\n\n Here are the DEMs that contain the above query location:\n');
 disp(pathsToDEMs);
 
+% Show how to do a series of queries
 
 %% Extract height (need to functionalize script below with inputs: zip file name and path, LatLonLimits, and query
 script_test_DEM_load_plot_interpolate
