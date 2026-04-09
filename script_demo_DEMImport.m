@@ -53,6 +53,20 @@
 %   % * Added geoid correction to LLA hand-measured data to show that this
 %   %   % causes the DEM query result to match, exactly, the test track
 %   %   % results
+% 
+% 2026_04_08 by Aneesh Batchu, abb6486@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Wrote this code originally
+% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Wrote this code originally
+% - In fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Wrote this code originally
+% - In script_test_fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Wrote this code originally
+% - In fcn_DEMImport_selectEntriesByBoundingBox
+%   % * Wrote this code originally
+% - In script_test_fcn_DEMImport_selectEntriesByBoundingBox
+%   % * Wrote this code originally
 
 % TO-DO:
 %
