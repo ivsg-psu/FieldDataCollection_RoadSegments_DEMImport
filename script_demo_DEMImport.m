@@ -86,6 +86,7 @@
 % - In script_demo_DEMImport
 %   % * Added demos showing how to do a series of queries using function
 %   %   % calls
+%   % * Added GPS library install
 % - In fcn_DEMImport_extractLatLonLimitsFromLASPRJ
 %   % * Fixed bug where outputs not filled
 % - In fcn_DEMImport_extractLimitsFromZipFile
@@ -160,6 +161,10 @@ dependencySubfolders{ith_repo} = {''};
 ith_repo = ith_repo+1;
 dependencyURLs{ith_repo} = 'https://github.com/ivsg-psu/FieldDataCollection_VisualizingFieldData_PlotRoad';
 dependencySubfolders{ith_repo} = {'Functions','Data'};
+
+ith_repo = ith_repo+1;
+dependencyURLs{ith_repo} = 'https://github.com/ivsg-psu/FieldDataCollection_GPSRelatedCodes_GPSClass';
+dependencySubfolders{ith_repo} = {'Functions'};
 
 % ith_repo = ith_repo+1;
 % dependencyURLs{ith_repo} = 'https://github.com/ivsg-psu/PathPlanning_GeomTools_GeomClassLibrary';

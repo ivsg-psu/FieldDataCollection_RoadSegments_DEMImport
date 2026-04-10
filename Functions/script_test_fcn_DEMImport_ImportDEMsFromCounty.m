@@ -40,27 +40,27 @@ titleString = sprintf('DEMO case: load entire PAMAP database');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 % figure(figNum); clf;
 
-% Call the function
-fcn_DEMImport_ImportDEMsFromCounty((figNum));
+% % Call the function
+% fcn_DEMImport_ImportDEMsFromCounty((figNum));
 
-https://www.pasda.psu.edu/download/alleghenycountyimagery2015/LiDAR/ClassifiedLAS/PAALLE_PA_S_SP83_sft/13604E409149N_las.zip
-https://www.pasda.psu.edu/download/alleghenycountyimagery2015/Spring_3inOrtho/GeoTIFFs/13604E409149N_tif.zip
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13578E409149N.zip
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/PAAlleghenyCo_Contours2017/Contour2ft_13578E409149N.zip
-
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/12997E498909N.zip (NW: )
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/14290E496269N.zip (NE: )
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/12390E432909N.zip (mostW: )
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13842E319389N.zip (mostS: )
-
-
-Increments (N to S): (2640)
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E498909N.zip
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E496269N.zip
-https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E493629N.zip
-
-Increments (W to E): 
-[12390 12416 12442 12469 12495 12522]
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2015/LiDAR/ClassifiedLAS/PAALLE_PA_S_SP83_sft/13604E409149N_las.zip
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2015/Spring_3inOrtho/GeoTIFFs/13604E409149N_tif.zip
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13578E409149N.zip
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/PAAlleghenyCo_Contours2017/Contour2ft_13578E409149N.zip
+% 
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/12997E498909N.zip (NW: )
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/14290E496269N.zip (NE: )
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/12390E432909N.zip (mostW: )
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13842E319389N.zip (mostS: )
+% 
+% 
+% Increments (N to S): (2640)
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E498909N.zip
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E496269N.zip
+% https://www.pasda.psu.edu/download/alleghenycountyimagery2017/lidar/PAALLE_PA_S_SP83_sft_zipped/13393E493629N.zip
+% 
+% Increments (W to E): 
+% [12390 12416 12442 12469 12495 12522]
 
 %% Download DEMS
 
