@@ -6,6 +6,10 @@
 % 2026_04_08 by Aneesh Batchu, abb6486@psu.edu
 % - In script_test_fcn_DEMImport_selectEntriesByBoundingBox
 %   % * Wrote this code originally
+% 
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_fcn_DEMImport_selectEntriesByBoundingBox
+%   % * Improved case testing
 
 %% Set up the workspace
 close all
@@ -66,7 +70,7 @@ end
 requiredStrings = {'\DEM\', '\North\'}; 
 
 % Get the matchingZipPaths
-[matchingLatLonLimits, matchingZipPaths, matchingEntriesFlags] = ... 
+[matchingLatLonLimits, matchingZipPaths, ~] = ... 
     fcn_DEMImport_selectEntriesByZipPathStrings(requiredStrings, LatLonLimits, zipPaths, (-1));
 
 % reference_latitude = 40.86368573;
@@ -77,3 +81,346 @@ queryBoundingBox = [40.86368573 40.86368573  -77.83592832 -77.83592832];
 % Call the function
 [overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = ...
       fcn_DEMImport_selectEntriesByBoundingBox(queryBoundingBox, matchingLatLonLimits, matchingZipPaths, (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(overlappingLatLonLimits));
+assert(isstring(overlappingZipPaths));
+assert(islogical(overlapEntriesFlags));
+
+% Check variable sizes
+Ninputs = size(matchingLatLonLimits,1);
+Nmatches = size(overlappingLatLonLimits,1);
+assert(size(overlappingZipPaths,1)==Nmatches);
+assert(size(overlapEntriesFlags,1)==Ninputs);
+assert(size(overlappingLatLonLimits,2)==4);
+assert(size(overlappingZipPaths,2)>=0);
+assert(size(overlapEntriesFlags,2)==1);
+
+% Check variable values
+% assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.1900    0.2000    1.8900    1.9000],4)));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%% Test cases start here. These are very simple, usually trivial
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  _______ ______  _____ _______ _____
+% |__   __|  ____|/ ____|__   __/ ____|
+%    | |  | |__  | (___    | | | (___
+%    | |  |  __|  \___ \   | |  \___ \
+%    | |  | |____ ____) |  | |  ____) |
+%    |_|  |______|_____/   |_| |_____/
+%
+%
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=TESTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Figures start with 2
+
+close all;
+fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
+
+%% TEST case: Weird case 1
+figNum = 20001;
+titleString = sprintf('TEST case: Not coded yet');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+
+
+
+
+%% Fast Mode Tests
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ______        _     __  __           _        _______        _
+% |  ____|      | |   |  \/  |         | |      |__   __|      | |
+% | |__ __ _ ___| |_  | \  / | ___   __| | ___     | | ___  ___| |_ ___
+% |  __/ _` / __| __| | |\/| |/ _ \ / _` |/ _ \    | |/ _ \/ __| __/ __|
+% | | | (_| \__ \ |_  | |  | | (_) | (_| |  __/    | |  __/\__ \ |_\__ \
+% |_|  \__,_|___/\__| |_|  |_|\___/ \__,_|\___|    |_|\___||___/\__|___/
+%
+%
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Fast%20Mode%20Tests
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Figures start with 8
+
+close all;
+fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
+
+%% Basic example - NO FIGURE
+figNum = 80001;
+fprintf(1,'Figure: %.0f: FAST mode, empty figNum\n',figNum);
+figure(figNum); close(figNum);
+
+% Load LatLonLimits and zipPaths 
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+
+if 1==0
+	% Do dumb load
+	load(pamap_lidar_limitsFile);
+else
+	% Do smart load, one variable at a time with warnings
+
+	matlabFileObject = matfile(pamap_lidar_limitsFile);        % returns matlab.io.MatFile object
+	vars = who(matlabFileObject);             % variable names in the file (no full load)
+	expectedVariables = {'LatLonLimits', 'zipPaths'};
+
+	for ith_expectedVariable = 1:length(expectedVariables)
+		thisExpectedVariable = expectedVariables{ith_expectedVariable};
+		% Read a variable only if it exists
+		if ismember(thisExpectedVariable, vars)
+			% loads only that variable/part
+			commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);',thisExpectedVariable);
+			eval(commandString);
+		else
+			warning('Variable %s not found in the limits file: %s.', thisExpectedVariable, pamap_lidar_limitsFile);
+		end
+	end
+end
+
+% Required strings
+requiredStrings = {'\DEM\', '\North\'}; 
+
+% Get the matchingZipPaths
+[matchingLatLonLimits, matchingZipPaths, ~] = ... 
+    fcn_DEMImport_selectEntriesByZipPathStrings(requiredStrings, LatLonLimits, zipPaths, (-1));
+
+% reference_latitude = 40.86368573;
+% reference_longitude = -77.83592832;
+
+queryBoundingBox = [40.86368573 40.86368573  -77.83592832 -77.83592832];
+
+% Call the function
+[overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = ...
+      fcn_DEMImport_selectEntriesByBoundingBox(queryBoundingBox, matchingLatLonLimits, matchingZipPaths, ([]));
+
+% Check variable types
+assert(isnumeric(overlappingLatLonLimits));
+assert(isstring(overlappingZipPaths));
+assert(islogical(overlapEntriesFlags));
+
+% Check variable sizes
+Ninputs = size(matchingLatLonLimits,1);
+Nmatches = size(overlappingLatLonLimits,1);
+assert(size(overlappingZipPaths,1)==Nmatches);
+assert(size(overlapEntriesFlags,1)==Ninputs);
+assert(size(overlappingLatLonLimits,2)==4);
+assert(size(overlappingZipPaths,2)>=0);
+assert(size(overlapEntriesFlags,2)==1);
+
+% Check variable values
+% assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.1900    0.2000    1.8900    1.9000],4)));
+
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
+
+
+%% Basic fast mode - NO FIGURE, FAST MODE
+figNum = 80002;
+fprintf(1,'Figure: %.0f: FAST mode, figNum=-1\n',figNum);
+figure(figNum); close(figNum);
+
+% Load LatLonLimits and zipPaths 
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+
+if 1==0
+	% Do dumb load
+	load(pamap_lidar_limitsFile);
+else
+	% Do smart load, one variable at a time with warnings
+
+	matlabFileObject = matfile(pamap_lidar_limitsFile);        % returns matlab.io.MatFile object
+	vars = who(matlabFileObject);             % variable names in the file (no full load)
+	expectedVariables = {'LatLonLimits', 'zipPaths'};
+
+	for ith_expectedVariable = 1:length(expectedVariables)
+		thisExpectedVariable = expectedVariables{ith_expectedVariable};
+		% Read a variable only if it exists
+		if ismember(thisExpectedVariable, vars)
+			% loads only that variable/part
+			commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);',thisExpectedVariable);
+			eval(commandString);
+		else
+			warning('Variable %s not found in the limits file: %s.', thisExpectedVariable, pamap_lidar_limitsFile);
+		end
+	end
+end
+
+% Required strings
+requiredStrings = {'\DEM\', '\North\'}; 
+
+% Get the matchingZipPaths
+[matchingLatLonLimits, matchingZipPaths, ~] = ... 
+    fcn_DEMImport_selectEntriesByZipPathStrings(requiredStrings, LatLonLimits, zipPaths, (-1));
+
+% reference_latitude = 40.86368573;
+% reference_longitude = -77.83592832;
+
+queryBoundingBox = [40.86368573 40.86368573  -77.83592832 -77.83592832];
+
+% Call the function
+[overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = ...
+      fcn_DEMImport_selectEntriesByBoundingBox(queryBoundingBox, matchingLatLonLimits, matchingZipPaths, (-1));
+
+% Check variable types
+assert(isnumeric(overlappingLatLonLimits));
+assert(isstring(overlappingZipPaths));
+assert(islogical(overlapEntriesFlags));
+
+% Check variable sizes
+Ninputs = size(matchingLatLonLimits,1);
+Nmatches = size(overlappingLatLonLimits,1);
+assert(size(overlappingZipPaths,1)==Nmatches);
+assert(size(overlapEntriesFlags,1)==Ninputs);
+assert(size(overlappingLatLonLimits,2)==4);
+assert(size(overlappingZipPaths,2)>=0);
+assert(size(overlapEntriesFlags,2)==1);
+
+% Check variable values
+% assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.1900    0.2000    1.8900    1.9000],4)));
+
+
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
+
+
+%% Compare speeds of pre-calculation versus post-calculation versus a fast variant
+figNum = 80003;
+fprintf(1,'Figure: %.0f: FAST mode comparisons\n',figNum);
+figure(figNum);
+close(figNum);
+% Load LatLonLimits and zipPaths 
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+
+if 1==0
+	% Do dumb load
+	load(pamap_lidar_limitsFile);
+else
+	% Do smart load, one variable at a time with warnings
+
+	matlabFileObject = matfile(pamap_lidar_limitsFile);        % returns matlab.io.MatFile object
+	vars = who(matlabFileObject);             % variable names in the file (no full load)
+	expectedVariables = {'LatLonLimits', 'zipPaths'};
+
+	for ith_expectedVariable = 1:length(expectedVariables)
+		thisExpectedVariable = expectedVariables{ith_expectedVariable};
+		% Read a variable only if it exists
+		if ismember(thisExpectedVariable, vars)
+			% loads only that variable/part
+			commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);',thisExpectedVariable);
+			eval(commandString);
+		else
+			warning('Variable %s not found in the limits file: %s.', thisExpectedVariable, pamap_lidar_limitsFile);
+		end
+	end
+end
+
+% Required strings
+requiredStrings = {'\DEM\', '\North\'}; 
+
+% Get the matchingZipPaths
+[matchingLatLonLimits, matchingZipPaths, ~] = ... 
+    fcn_DEMImport_selectEntriesByZipPathStrings(requiredStrings, LatLonLimits, zipPaths, (-1));
+
+% reference_latitude = 40.86368573;
+% reference_longitude = -77.83592832;
+
+queryBoundingBox = [40.86368573 40.86368573  -77.83592832 -77.83592832];
+
+Niterations = 10;
+
+% Do calculation without pre-calculation
+tic;
+for ith_test = 1:Niterations
+
+	% Call the function
+	[overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = ...
+		fcn_DEMImport_selectEntriesByBoundingBox(queryBoundingBox, matchingLatLonLimits, matchingZipPaths, ([]));
+end
+slow_method = toc;
+
+% Do calculation with pre-calculation, FAST_MODE on
+tic;
+for ith_test = 1:Niterations
+
+	% Call the function
+	[overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = ...
+		fcn_DEMImport_selectEntriesByBoundingBox(queryBoundingBox, matchingLatLonLimits, matchingZipPaths, (-1));
+end
+fast_method = toc;
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
+
+% Plot results as bar chart
+figure(373737);
+clf;
+hold on;
+
+X = categorical({'Normal mode','Fast mode'});
+X = reordercats(X,{'Normal mode','Fast mode'}); % Forces bars to appear in this exact order, not alphabetized
+Y = [slow_method fast_method ]*1000/Niterations;
+bar(X,Y)
+ylabel('Execution time (Milliseconds)')
+
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
+
+
+%% BUG cases
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ____  _    _  _____
+% |  _ \| |  | |/ ____|
+% | |_) | |  | | |  __    ___ __ _ ___  ___  ___
+% |  _ <| |  | | | |_ |  / __/ _` / __|/ _ \/ __|
+% | |_) | |__| | |__| | | (_| (_| \__ \  __/\__ \
+% |____/ \____/ \_____|  \___\__,_|___/\___||___/
+%
+% See: http://patorjk.com/software/taag/#p=display&v=0&f=Big&t=BUG%20cases
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% All bug case figures start with the number 9
+
+% close all;
+
+%% BUG 
+
+%% Fail conditions
+if 1==0
+    %
+       
+end
+
+
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+
+
+

@@ -49,6 +49,10 @@ function [limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(
 % 2026_04_03 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_extractLatLonLimitsFromLASPRJ
 %   % * Added limitsFt output
+%
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_extractLatLonLimitsFromLASPRJ
+%   % * Fixed bug where outputs not filled
 
 % TO-DO:
 %
@@ -161,6 +165,9 @@ end
 %  |_|  |_|\__,_|_|_| |_|
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+limitsLatLon = nan(1,4);
+limitsFt = nan(1,4);
 
 % read WKT text
 wkt = strtrim(fileread(prjFilepath));
@@ -183,8 +190,6 @@ try
 catch
 	warning('backtrace','on');
 	warning('Unable to load LASPRJ file: %s\n\t Skipping.\n',prjFilepath);
-	limitsLatLon = nan(1,4);
-	limitsFt = nan(1,4);
 	return;
 end
 
@@ -213,9 +218,18 @@ maxLat = max(lat);
 % Determine geographic limits 
 latlim = [minLat maxLat];
 lonlim = [minLon maxLon];
-
-
 limitsLatLon = [latlim lonlim];
+
+% Determine ft limits 
+minx = min(x); 
+maxx = max(x);
+miny = min(y); 
+maxy = max(y);
+
+xlim = [minx maxx];
+ylim = [miny maxy];
+limitsFt = [ylim xlim];
+
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

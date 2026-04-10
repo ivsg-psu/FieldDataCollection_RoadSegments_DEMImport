@@ -35,6 +35,7 @@ function [overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = .
 % DEPENDENCIES:
 %
 %      fcn_DebugTools_checkInputsToFunctions
+%      fcn_DEMImport_plotLatLonLimits
 %
 % EXAMPLES:
 %
@@ -50,6 +51,11 @@ function [overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = .
 % 2026_04_08 by Aneesh Batchu, abb6486@psu.edu
 % - In fcn_DEMImport_selectEntriesByBoundingBox
 %   % * Wrote this code originally
+%
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_selectEntriesByBoundingBox
+%   % * Added plotting output using fcn_DEMImport_plotLatLonLimits
+
 
 %% Debugging and Input checks
 
@@ -172,11 +178,21 @@ overlappingZipPaths = matchingZipPaths(overlapEntriesFlags,:);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
 
-    figure(figNum);
-    close(figNum);
+	clear plotFormat
+	plotFormat.Color = [0.5 0.5 1];
+	plotFormat.Marker = '.';
+	plotFormat.MarkerSize = 10;
+	plotFormat.LineStyle = '-';
+	plotFormat.LineWidth = 2;
 
-    fprintf(1,'\n\n Here are the DEMs within the query bounding box:\n');
-    disp(overlappingZipPaths);
+	fcn_DEMImport_plotLatLonLimits(overlappingLatLonLimits, (plotFormat), (figNum));
+
+	if 1==0
+		fprintf(1,'\n\n Here are the DEMs within the query bounding box:\n');
+		disp(overlappingZipPaths);
+
+	end
+
 
 end
 

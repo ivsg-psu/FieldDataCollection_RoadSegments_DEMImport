@@ -13,7 +13,7 @@ function [matchingTileIndexMatrix, pointTileLogicalMatrix, unmatchedPointFlags, 
 % 
 % INPUTS:
 % 
-%   queryLatLon:cN x 2 matrix of query points in latitude and longitude
+%   queryLatLon: N x 2 matrix of query points in latitude and longitude
 % 
 %   overlappingLatLonLimits: [lat_min lat_max lon_min lon_max] M x 4 matrix
 %   containing the latitude/longitude limits of the candidate DEM tiles
@@ -60,6 +60,20 @@ function [matchingTileIndexMatrix, pointTileLogicalMatrix, unmatchedPointFlags, 
 % 2026_04_09 by Aneesh Batchu, abb6486@psu.edu
 % - In fcn_DEMImport_assignTilesToQueryPoints
 %   % * Wrote this code originally
+%
+% 2026_04_09 by Aneesh Batchu, abb6486@psu.edu
+% - In fcn_DEMImport_assignTilesToQueryPoints
+%   % * Modified input checking to allow mixed inputs for
+%   %   % overlappingLatLonLimits 
+
+% TO-DO:
+%
+% 2026_03_21 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_assignTilesToQueryPoints
+%   % * Need to be able to handle cases where the input,
+%   overlappingLatLonLimits, may be empty. This happens when the user might
+%   do a query over a location where there is no limit definition files.
+
 
 %% Debugging and Input checks
 
@@ -113,7 +127,7 @@ if 0==flag_max_speed
         fcn_DebugTools_checkInputsToFunctions(queryLatLon, '2column_of_mixed')
 
         % Check overlappingLatLonLimits input
-        fcn_DebugTools_checkInputsToFunctions(overlappingLatLonLimits, '4column_of_numbers')
+        fcn_DebugTools_checkInputsToFunctions(overlappingLatLonLimits, '4column_of_mixed')
 
     end
 end
@@ -236,14 +250,48 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
 
-    figure(figNum);
-    close(figNum);
+	currentAxis = gca;
+	colorOrdering = currentAxis.ColorOrder;
+	Ncolors = size(colorOrdering,1);
 
-    fprintf(1,'\nMatching tile index matrix:\n');
-    disp(matchingTileIndexMatrix);
+	plotFormat.Color = [1 1 1];
+	plotFormat.Marker = '.';
+	plotFormat.MarkerSize = 20;
+	plotFormat.LineStyle = 'none';
+	plotFormat.LineWidth = 3;
+	fcn_plotRoad_plotLL(queryLatLon, (plotFormat), (figNum));
 
-    fprintf(1,'\nPoint-to-tile logical matrix:\n');
-    disp(pointTileLogicalMatrix);
+	for ith_limit = 1:size(overlappingLatLonLimits,1)
+		thisLimit = overlappingLatLonLimits(ith_limit,:);
+
+		ith_color = mod(ith_limit,Ncolors)+1;
+		plotFormat.Color = colorOrdering(ith_color,:);
+		plotFormat.Marker = '.';
+		plotFormat.MarkerSize = 20;
+		plotFormat.LineStyle = '-';
+		plotFormat.LineWidth = 3;
+
+		fcn_DEMImport_plotLatLonLimits(thisLimit, (plotFormat), (figNum));
+
+		% Plot the query points associated with this limit. Keep any that
+		% have a column-wise match
+		matchingPointFlags = any(matchingTileIndexMatrix == ith_limit,2);
+		pointsThisLimit = queryLatLon(matchingPointFlags,1:2);
+				
+		plotFormat.Marker = 'o';
+		plotFormat.LineStyle = 'none';
+
+		fcn_plotRoad_plotLL(pointsThisLimit, (plotFormat), (figNum));
+
+	end
+
+	if 1==0
+		fprintf(1,'\nMatching tile index matrix:\n');
+		disp(matchingTileIndexMatrix);
+
+		fprintf(1,'\nPoint-to-tile logical matrix:\n');
+		disp(pointTileLogicalMatrix);
+	end
 
 end
 

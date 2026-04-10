@@ -35,6 +35,7 @@ function [matchingLatLonLimits, matchingZipPaths, matchingEntriesFlags] = ...
 % DEPENDENCIES:
 %
 %      fcn_DebugTools_checkInputsToFunctions
+%      fcn_DEMImport_plotLatLonLimits
 %
 % EXAMPLES:
 %
@@ -50,6 +51,11 @@ function [matchingLatLonLimits, matchingZipPaths, matchingEntriesFlags] = ...
 % 2026_04_08 by Aneesh Batchu, abb6486@psu.edu
 % - In fcn_DEMImport_selectEntriesByZipPathStrings
 %   % * Wrote this code originally
+%
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Added plotting output using fcn_DEMImport_plotLatLonLimits
+
 
 %% Debugging and Input checks
 
@@ -164,11 +170,19 @@ matchingZipPaths = zipPaths(matchingEntriesFlags);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
 
-    figure(figNum);
-    close(figNum);
+	clear plotFormat
+	plotFormat.Color = [0 0.7 0];
+	plotFormat.Marker = '.';
+	plotFormat.MarkerSize = 10;
+	plotFormat.LineStyle = '-';
+	plotFormat.LineWidth = 3;
 
-    fprintf(1,'\n\n Here are the DEMs that contain the above query location:\n');
-    disp(matchingZipPaths);
+	fcn_DEMImport_plotLatLonLimits(matchingLatLonLimits, (plotFormat), (figNum));
+
+	if 1==0
+		fprintf(1,'\n\n Here are the DEMs that contain the above query location:\n');
+		disp(matchingZipPaths);
+	end
 
 end
 

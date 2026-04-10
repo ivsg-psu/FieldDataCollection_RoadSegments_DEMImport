@@ -81,13 +81,44 @@
 %   % * Wrote this code originally
 % - In script_test_fcn_DEMImport_queryElevationsFromMatchedTiles
 %   % * Wrote this code originally
+%
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In script_demo_DEMImport
+%   % * Added demos showing how to do a series of queries using function
+%   %   % calls
+% - In fcn_DEMImport_extractLatLonLimitsFromLASPRJ
+%   % * Fixed bug where outputs not filled
+% - In fcn_DEMImport_extractLimitsFromZipFile
+%   % * Functionalized plotting using call to fcn_DEMImport_plotLatLonLimits
+% - In script_test_fcn_DEMImport_extractLatLonLimitsFromLASPRJ
+%   % * Improved output checking to handle limitsFt
+% - In script_test_fcn_DEMImport_plotLatLonLimits
+%   % * Wrote this code originally
+% - In fcn_DEMImport_plotLatLonLimits
+%   % * First write of function
+% - In script_test_fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Improved case testing
+% - In fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Added plotting output using fcn_DEMImport_plotLatLonLimits
+% - In script_test_fcn_DEMImport_selectEntriesByBoundingBox
+%   % * Improved case testing
+% - In fcn_DEMImport_selectEntriesByBoundingBox
+%   % * Added plotting output using fcn_DEMImport_plotLatLonLimits
+% - In fcn_DEMImport_assignTilesToQueryPoints
+%   % * Modified input checking to allow mixed inputs for
+%   %   % overlappingLatLonLimits 
 
 % TO-DO:
 %
 % 2026_04_02 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
 %   % * Move fcn_INTERNAL_timeStringFromSeconds into DebugTools
-
+%
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_assignTilesToQueryPoints
+%   % * Need to be able to handle cases where the input,
+%   overlappingLatLonLimits, may be empty. This happens when the user might
+%   do a query over a location where there is no limit definition files.
 
 %% Make sure we are running out of root directory
 st = dbstack; 
@@ -290,6 +321,12 @@ if 1==0
 end
 
 %% DEMO: show how to pull out zip locations
+figNum = 10005;
+titleString = sprintf('DEMO case: show how to pull out zip locations');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+
 % After the data is scraped, query it. 
 pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
 
@@ -342,7 +379,68 @@ pathsToDEMs = pathsToFilesContainingHeightData(flagsPathsToDEMs);
 fprintf(1,'\n\n Here are the DEMs that contain the above query location:\n');
 disp(pathsToDEMs);
 
-% Show how to do a series of queries
+%% DEMO: Show how to do a series of queries using function calls
+figNum = 10006;
+titleString = sprintf('DEMO case:  Show how to do a series of queries using function calls');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+%%%%%%%%%%
+% Load LatLonLimits and zipPaths (INPUTS)
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+
+if 1==0
+	% Do dumb load
+	load(pamap_lidar_limitsFile);
+else
+	% Do smart load, one variable at a time with warnings
+
+	matlabFileObject = matfile(pamap_lidar_limitsFile);        % returns matlab.io.MatFile object
+	vars = who(matlabFileObject);             % variable names in the file (no full load)
+	expectedVariables = {'LatLonLimits', 'zipPaths'};
+
+	for ith_expectedVariable = 1:length(expectedVariables)
+		thisExpectedVariable = expectedVariables{ith_expectedVariable};
+		% Read a variable only if it exists
+		if ismember(thisExpectedVariable, vars)
+			% loads only that variable/part
+			commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);',thisExpectedVariable);
+			eval(commandString);
+		else
+			warning('Variable %s not found in the limits file: %s.', thisExpectedVariable, pamap_lidar_limitsFile);
+		end
+	end
+end
+
+% INPUT
+requiredStrings = {'\DEM\', '\North\'}; 
+
+%%%%%%%%%%
+% Call the function to limit by strings
+[matchingLatLonLimits, matchingZipPaths, matchingEntriesFlags] = ... 
+    fcn_DEMImport_selectEntriesByZipPathStrings(requiredStrings, LatLonLimits, zipPaths, (figNum));
+
+queryBoundingBox = [40 41  -78 -77];
+
+%%%%%%%%%%
+% Call the function to limit by bounding box
+[overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = ...
+      fcn_DEMImport_selectEntriesByBoundingBox(queryBoundingBox, matchingLatLonLimits, matchingZipPaths, (figNum));
+
+%%%%%%%%%%
+% Assign DEM tiles to each query point
+% Define query points
+mins = [40.77 -77.9];
+maxs = [40.9 -77.78];
+Nrows = 100;
+rng(1);
+LLAdata = fcn_INTERNAL_generateRandomInRange(mins,maxs,Nrows);
+[matchingTileIndexMatrix, pointTileLogicalMatrix, unmatchedPointFlags, ...
+    multipleMatchFlags, numMatchesPerPoint] = ...
+    fcn_DEMImport_assignTilesToQueryPoints(queryLatLon, overlappingLatLonLimits, figNum);
+
+
 
 %% Extract height (need to functionalize script below with inputs: zip file name and path, LatLonLimits, and query
 script_test_DEM_load_plot_interpolate
@@ -387,3 +485,8 @@ end
 
 end % Ends fcn_INTERNAL_clearUtilitiesFromPathAndFolders
 
+%% fcn_INTERNAL_generateRandomInRange
+function output = fcn_INTERNAL_generateRandomInRange(mins,maxs,Nrows)
+allOnes = ones(Nrows,1);
+output = allOnes*(maxs-mins) .* rand(Nrows,length(mins)) + allOnes*mins;
+end % Ends fcn_INTERNAL_generateRandomInRange

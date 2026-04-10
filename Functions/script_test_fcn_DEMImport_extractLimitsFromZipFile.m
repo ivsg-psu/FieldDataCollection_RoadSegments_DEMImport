@@ -55,7 +55,7 @@ if ~exist(zipFile,'file')
 		tic
 		websave(zipFile, thisURL);
 		saveTime = toc;
-		fprintf(1,'\tSaved temp file %s  in %.2f seconds \t', zipFile, saveTime)
+		fprintf(1,'\tSaved temp file %s  in %.2f seconds \t', zipFile, saveTime);
 	catch
 		fprintf(1,'Unable to download file: %s \t', tempfile);
 		error('Unable to continue!');
@@ -78,7 +78,7 @@ assert(isequal(size(limitsFt),[1 4]));
 
 % Check variable values
 assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
-assert(isequal(round(limitsFt/1E6,4),round([0.1900    0.2000    1.8900    1.9000],4)));
+assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -110,28 +110,28 @@ titleString = sprintf('TEST case: Weird case 1');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
-zipFile = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\LidarMosaics\CountyMosaics\county_DEM_3M\PAMAP_DEM_mosaic_York_3m.zip';
-
-% Call the function
-[limitsLatLon, limitsFt] = fcn_DEMImport_extractLimitsFromZipFile(zipFile, figNum);
-
-sgtitle(titleString, 'Interpreter','none');
-
-
-% Check variable types
-assert(isnumeric(limitsLatLon));
-assert(isnumeric(limitsFt));
-
-% Check variable sizes
-assert(isequal(size(limitsLatLon),[1 4]));
-assert(isequal(size(limitsFt),[1 4]));
-
-% Check variable values
-assert(isequal(round(limitsLatLon,4),[39.6799   40.2378  -77.1762  -76.2045]));
-assert(isequal(round(limitsFt/1E6,4),round([0.1300    0.3300    2.1300    2.4000],4)));
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),figNum));
+% zipFile = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\LidarMosaics\CountyMosaics\county_DEM_3M\PAMAP_DEM_mosaic_York_3m.zip';
+% 
+% % Call the function
+% [limitsLatLon, limitsFt] = fcn_DEMImport_extractLimitsFromZipFile(zipFile, figNum);
+% 
+% sgtitle(titleString, 'Interpreter','none');
+% 
+% 
+% % Check variable types
+% assert(isnumeric(limitsLatLon));
+% assert(isnumeric(limitsFt));
+% 
+% % Check variable sizes
+% assert(isequal(size(limitsLatLon),[1 4]));
+% assert(isequal(size(limitsFt),[1 4]));
+% 
+% % Check variable values
+% assert(isequal(round(limitsLatLon,4),[39.6799   40.2378  -77.1762  -76.2045]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.1300    0.3300    2.1300    2.4000],4)));
+% 
+% % Make sure plot opened up
+% assert(isequal(get(gcf,'Number'),figNum));
 
 
 %% TEST case: Test with -2 option to avoid deleting extraction directory

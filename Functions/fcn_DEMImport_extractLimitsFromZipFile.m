@@ -44,6 +44,10 @@ function [limitsLatLon, limitsFt] = fcn_DEMImport_extractLimitsFromZipFile(zipFi
 % - In fcn_DEMImport_extractLimitsFromZipFile
 %   % * Functionalized file checking to include many different types
 %   % * Added limitsFt output
+%
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_extractLimitsFromZipFile
+%   % * Functionalized plotting using call to fcn_DEMImport_plotLatLonLimits
 
 % TO-DO:
 %
@@ -144,6 +148,7 @@ end
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
+figNum = [];
 if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
@@ -244,24 +249,14 @@ end
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
-	LLplotData = [...
-		limitsLatLon(1) limitsLatLon(3);
-		limitsLatLon(2) limitsLatLon(3);
-		limitsLatLon(2) limitsLatLon(4);
-		limitsLatLon(1) limitsLatLon(4);
-		limitsLatLon(1) limitsLatLon(3);
-		];
+
 	clear plotFormat
 	plotFormat.Color = [0 0.7 0];
 	plotFormat.Marker = '.';
 	plotFormat.MarkerSize = 10;
 	plotFormat.LineStyle = '-';
 	plotFormat.LineWidth = 3;
-	fcn_plotRoad_plotLL(LLplotData, (plotFormat), (figNum));
-	geolimits(limitsLatLon(1,1:2), limitsLatLon(1,3:4));
-	currentZoom = get(gca,'ZoomLevel');
-	set(gca,'ZoomLevel',currentZoom-2);
-      
+	fcn_DEMImport_plotLatLonLimits(limitsLatLon, (plotFormat), (figNum));     
 end
 
 if flag_do_debug
