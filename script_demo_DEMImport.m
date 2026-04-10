@@ -67,6 +67,20 @@
 %   % * Wrote this code originally
 % - In script_test_fcn_DEMImport_selectEntriesByBoundingBox
 %   % * Wrote this code originally
+% 
+% 2026_04_09 by Aneesh Batchu, abb6486@psu.edu
+% - In fcn_DEMImport_assignTilesToQueryPoints
+%   % * Wrote this code originally
+% - In script_test_fcn_DEMImport_assignTilesToQueryPoints
+%   % * Wrote this code originally
+% - In fcn_DEMImport_ensureLocalZipFromPASDAPath
+%   % * Wrote this code originally
+% - In script_test_fcn_DEMImport_ensureLocalZipFromPASDAPath
+%   % * Wrote this code originally
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Wrote this code originally
+% - In script_test_fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Wrote this code originally
 
 % TO-DO:
 %
