@@ -27,7 +27,7 @@ function fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResult, 
 % DEPENDENCIES:
 %
 %      fcn_DebugTools_checkInputsToFunctions
-%      fcn_DEMImport_ImportZipFromURL
+%      fcn_DEMImport_importZipFromURL
 %      
 % EXAMPLES:
 %
@@ -42,13 +42,17 @@ function fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResult, 
 % 2026_04_02 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
 %   % * Wrote the code originally, using script_test_scrapeDirectory as starter
+%
+% 2026_04_11 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
+%   % * Moved fcn_INTERNAL_timeStringFromSeconds into DebugTools
 
 
 % TO-DO:
 %
-% 2026_04_02 by Sean Brennan, sbrennan@psu.edu
+% 2026_04_11 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
-%   % * Move fcn_INTERNAL_timeStringFromSeconds into DebugTools
+%   % * (add items here)
 
 
 
@@ -174,7 +178,7 @@ bytesVector = cell2mat(listingsToDownload(:,4));
 totalGBytes = fcn_DebugTools_number2string(sum(bytesVector)/1E9);
 totalTime = sum(bytesVector)/estimatedBytesPerSecond;
 fprintf(1,'Total GB of %s data: %s\n',dataStringToExtract, totalGBytes);
-totalTimeString = fcn_INTERNAL_timeStringFromSeconds(totalTime);
+totalTimeString = fcn_DebugTools_printTimeStringFromSeconds(totalTime);
 fprintf(1,'Estimated copy time, assuming all need to be copied: %s \n',totalTimeString);
 fprintf(1,'Total number of listings to transfer: %.0d files and/or folders\n',Nlistings);
 
@@ -194,8 +198,10 @@ for ith_listing = 1:Nlistings
 		fprintf(1,'Operation %.0d of %.0d, Size: %.3f MB is being copied...',ith_listing, Nlistings, bytesToCopy/1E6);
 		% Call the function
 		estimatedSeconds = bytesToCopy/estimatedBytesPerSecond;
-		saveTime = fcn_DEMImport_ImportZipFromURL(URLtoImport, (estimatedSeconds), (-1));
-		
+		PASDA_URL_Prefix = [];
+		rootOfLargeDataPath = [];
+		saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (PASDA_URL_Prefix), (rootOfLargeDataPath), (-1));
+
 		% If the file is large, update copy estimate
 		if bytesToCopy>1E6 && saveTime>0
 			estimatedBytesPerSecond = (bytesToCopy+overhead)/saveTime;
@@ -247,22 +253,3 @@ indicesToExtract = contains(lidarListings(:,1),dataStringToExtract,'IgnoreCase',
 extractedListings = lidarListings(indicesToExtract,:);
 end % Ends fcn_INTERNAL_extractSpecificString
 
-%% fcn_INTERNAL_timeStringFromSeconds
-function timeString = fcn_INTERNAL_timeStringFromSeconds(totalTimeInSeconds)
-if totalTimeInSeconds<60
-	timeString = sprintf('%.1f seconds',totalTimeInSeconds);
-else
-	totalTimeInMinutes = totalTimeInSeconds/60;
-	if totalTimeInMinutes<60
-		timeString = sprintf('%.1f minutes',totalTimeInMinutes);
-	else
-		totalTimeInHours = totalTimeInMinutes/60;
-		if totalTimeInHours<24
-			timeString = sprintf('%.1f hours',totalTimeInHours);
-		else
-			totalTimeInDays = totalTimeInHours/24;
-			timeString = sprintf('%.1f days',totalTimeInDays);
-		end
-	end
-end
-end % Ends fcn_INTERNAL_timeStringFromSeconds

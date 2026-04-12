@@ -47,6 +47,11 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_quer
 % 2026_04_08 by Aneesh Batchu, abb6486@psu.edu
 % - In fcn_DEMImport_queryElevationsFromSingleTile
 %   % * Wrote this code originally
+% 
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Fixed bug where reference_latitude, etc were not defined inside
+%   %   % plotting function
 
 %% Debugging and Input checks
 
@@ -267,6 +272,10 @@ end % Ends main function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 function [Epatch, Npatch, Upatch, trackDEM_ENU] = fcn_INTERNAL_plotQueryPatchAndPoints(Z, Rmap, projCRS, queryLatLon, elevationsInMeters, gps_object)
+
+reference_latitude = 40.86368573;
+reference_longitude = -77.83592832;
+reference_altitude = 344.189;
 
 % Build projected world coordinates using projected raster reference
 % when plotting- This keeps the corect orientation of the DEM patch

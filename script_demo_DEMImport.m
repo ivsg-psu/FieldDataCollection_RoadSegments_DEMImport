@@ -32,11 +32,11 @@
 %   %   % pasda website
 %
 % 2026_03_31 by Sean Brennan, sbrennan@psu.edu
-% - In fcn_DEMImport_ImportZipFromURL
+% - In fcn_DEMImport_importZipFromURL.m
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
 %
 % 2026_04_02 by Sean Brennan, sbrennan@psu.edu
-% - In fcn_DEMImport_ImportZipFromURL
+% - In fcn_DEMImport_importZipFromURL.m
 %   % * Added estimated completion time as input, actual time as output
 %   % * Added error reporting
 %
@@ -87,6 +87,8 @@
 %   % * Added demos showing how to do a series of queries using function
 %   %   % calls
 %   % * Added GPS library install
+%   % * Added plotting of test track
+%   % * Minor fixed throughout to prep for release
 % - In fcn_DEMImport_extractLatLonLimitsFromLASPRJ
 %   % * Fixed bug where outputs not filled
 % - In fcn_DEMImport_extractLimitsFromZipFile
@@ -108,12 +110,19 @@
 % - In fcn_DEMImport_assignTilesToQueryPoints
 %   % * Modified input checking to allow mixed inputs for
 %   %   % overlappingLatLonLimits 
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Fixed bug where reference_latitude, etc were not defined inside
+%   %   % plotting function
+% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Cleaned up test scripts
+% - In script_test_fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Cleaned up test scripts
+% - In fcn_DEMImport_importZipFromURL.m
+%   % Renamed from fcn_DEMImport_ImportZipFromURL.m
+% - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
+%   % * Moved fcn_INTERNAL_timeStringFromSeconds into DebugTools
 
 % TO-DO:
-%
-% 2026_04_02 by Sean Brennan, sbrennan@psu.edu
-% - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
-%   % * Move fcn_INTERNAL_timeStringFromSeconds into DebugTools
 %
 % 2026_04_10 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_assignTilesToQueryPoints
@@ -293,7 +302,7 @@ URLtoImport = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/N
 estimatedBytesPerSecond = [];
 
 % Call the function
-fcn_DEMImport_ImportZipFromURL(URLtoImport, (estimatedBytesPerSecond), (figNum));
+fcn_DEMImport_importZipFromURL.m(URLtoImport, (estimatedBytesPerSecond), (figNum));
 
 %% DEMO: process ALL data scraped under pamap_lidar folder
 % This cycles through all downloaded data and builds a database of "limits"
@@ -447,8 +456,210 @@ LLAdata = fcn_INTERNAL_generateRandomInRange(mins,maxs,Nrows);
 
 
 
-%% Extract height (need to functionalize script below with inputs: zip file name and path, LatLonLimits, and query
-script_test_DEM_load_plot_interpolate
+
+%% Test Track Plotting
+% Creates an image of the test track using DEMs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  _______        _     _______             _      _____  _       _   _   _
+% |__   __|      | |   |__   __|           | |    |  __ \| |     | | | | (_)
+%    | | ___  ___| |_     | |_ __ __ _  ___| | __ | |__) | | ___ | |_| |_ _ _ __   __ _
+%    | |/ _ \/ __| __|    | | '__/ _` |/ __| |/ / |  ___/| |/ _ \| __| __| | '_ \ / _` |
+%    | |  __/\__ \ |_     | | | | (_| | (__|   <  | |    | | (_) | |_| |_| | | | | (_| |
+%    |_|\___||___/\__|    |_|_|  \__,_|\___|_|\_\ |_|    |_|\___/ \__|\__|_|_| |_|\__, |
+%                                                                                  __/ |
+%                                                                                 |___/
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Test+Track+Plotting&x=none&v=4&h=4&w=80&we=false
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+
+% Files are from:
+% https://www.pasda.psu.edu/download/psu_opp/2022Orthophotos/LIDAR/las/255019425.las
+% https://www.pasda.psu.edu/download/psu_opp/2022Orthophotos/LIDAR/las/255019450.las
+% etc.
+
+files = {'255019425.las','255019450.las','257519425.las','257519450.las'};
+
+cameraViewfilename = fullfile('C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport','Data','pcshow_cameraview.mat');
+
+
+loc = [];
+intensity = [];
+for ith_file = 1:length(files)
+	thisFile = files{ith_file};
+	filepath = fullfile('C:\Users\snb10\Desktop\To_DeleteTemp\',thisFile);
+
+	lasReader = lasFileReader(filepath);
+
+	[ptCloud, ptAttributes] = readPointCloud(lasReader, "Attributes", "Classification");
+
+	loc = [loc; ptCloud.Location];   %#ok<AGROW> % Nx3
+	intensity = [intensity; ptCloud.Intensity]; %#ok<AGROW> % Nx1
+end
+
+
+%%%%
+%  Colorize by height
+
+z = double(loc(:,3));
+if isempty(z)
+    error('No points read from file.');
+end
+
+% Normalize Z to [0,1]
+zmin = 1150; % min(z);
+zmax = 1375; % max(z);
+
+z = min(z,zmax);
+z = max(z,zmin);
+
+locModified = loc;
+locModified(:,3) = min(locModified(:,3),zmax);
+locModified(:,3) = max(locModified(:,3),zmin);
+
+if zmax > zmin
+    znorm1 = (z - zmin) / (zmax - zmin);
+else
+    znorm1 = zeros(size(z)); % all equal height
+end
+
+znorm = znorm1;
+
+% Map normalized heights to a colormap (choose colormap and resolution)
+nColors = 256;
+cmap = parula(nColors);                      % nColors x 3
+idx = max(1, round(znorm*(nColors-1)) + 1);  % indices 1..nColors
+colors = uint8(255 * cmap(idx, :));          % Nx3 uint8
+
+% Show point cloud with color
+figure(1234);
+clf;
+
+pcshow(locModified, colors)
+title('Point Cloud Colored by Height (Z)')
+xlabel('X'); ylabel('Y'); zlabel('Z')
+colorbar('Ticks',[0 1], 'TickLabels', [num2str(zmin) ' ' num2str(zmax)])
+colormap(parula)
+
+% Set a good camera view
+s = load(cameraViewfilename);      % contains cam
+fcn_INTERNAL_setCameraView(s.cam);
+
+% Save new camera view?
+if 1==0
+	cam = getCameraView(gca, filename);
+end
+
+%%%%
+%  Colorize by intensity
+
+z = double(intensity);
+if isempty(z)
+    error('No points read from file.');
+end
+
+% Normalize Z to [0,1]
+zmin = min(z);
+zmax = 2000; % max(z);
+
+z = min(z,zmax);
+z = max(z,zmin);
+
+if zmax > zmin
+    znorm2 = (z - zmin) / (zmax - zmin);
+else
+    znorm2 = zeros(size(z)); % all equal height
+end
+
+znorm = znorm2;
+
+% Map normalized heights to a colormap (choose colormap and resolution)
+nColors = 256;
+cmap = parula(nColors);                      % nColors x 3
+idx = max(1, round(znorm*(nColors-1)) + 1);  % indices 1..nColors
+colors = uint8(255 * cmap(idx, :));          % Nx3 uint8
+
+% Show point cloud with color
+figure(2345);
+clf;
+
+pcshow(locModified, colors)
+title('Point Cloud Colored by Height (Z)')
+xlabel('X'); ylabel('Y'); zlabel('Z')
+colorbar('Ticks',[0 1], 'TickLabels', [num2str(zmin) ' ' num2str(zmax)])
+colormap(parula)
+
+% Set a good camera view
+s = load(cameraViewfilename);      % contains cam
+fcn_INTERNAL_setCameraView(s.cam);
+
+%%%%%
+%  Save image?
+if flag_exportFigures
+	h_fig = gcf;
+	figFileName = fullfile(pwd,'Images','testTrackDEM_Intensity.png');
+	exportgraphics(h_fig,figFileName,'Resolution',300)
+end
+
+
+
+%%%%%
+%  Colorize by blended height and intensity
+if 1==0
+	znorm = 0.5*znorm2 + 0.5*znorm1;
+	znorm = min(znorm,1);
+	znorm = max(znorm,0);
+
+	% Map normalized heights to a colormap (choose colormap and resolution)
+	nColors = 256;
+	cmap = parula(nColors);                      % nColors x 3
+	idx = max(1, round(znorm*(nColors-1)) + 1);  % indices 1..nColors
+	colors = uint8(255 * cmap(idx, :));          % Nx3 uint8
+
+	% Show point cloud with color
+	figure(3456);
+	clf;
+
+	pcshow(locModified, colors)
+	title('Point Cloud Colored by Height (Z)')
+	xlabel('X'); ylabel('Y'); zlabel('Z')
+	colorbar('Ticks',[0 1], 'TickLabels', [num2str(zmin) ' ' num2str(zmax)])
+	colormap(parula)
+
+	% Set a good camera view
+	s = load(cameraViewfilename);      % contains cam
+	fcn_INTERNAL_setCameraView(s.cam);
+end
+
+%%%%%%%
+%  Colorize by whichever of height and intensity is furthest from each mean
+diff1 = abs(znorm1 - mean(znorm1,'all','omitmissing'));
+% diff1 = (znorm1 -0.5);
+diff2 = abs(znorm2 - mean(znorm2,'all','omitmissing'));
+diffs = [diff1 diff2];
+[~,ind] = max(diffs,[],2);
+
+znorm = znorm1;
+znorm(ind==2) = znorm2(ind==2);
+
+% Map normalized heights to a colormap (choose colormap and resolution)
+nColors = 256;
+cmap = parula(nColors);                      % nColors x 3
+idx = max(1, round(znorm*(nColors-1)) + 1);  % indices 1..nColors
+colors = uint8(255 * cmap(idx, :));          % Nx3 uint8
+
+% Show point cloud with color
+figure(4567);
+clf;
+
+pcshow(locModified, colors)
+title('Point Cloud Colored by Height (Z)')
+xlabel('X'); ylabel('Y'); zlabel('Z')
+colorbar('Ticks',[0 1], 'TickLabels', [num2str(zmin) ' ' num2str(zmax)])
+colormap(parula)
+
+% Set a good camera view
+s = load(cameraViewfilename);      % contains cam
+fcn_INTERNAL_setCameraView(s.cam);
 
 
 %% Functions follow
@@ -495,3 +706,57 @@ function output = fcn_INTERNAL_generateRandomInRange(mins,maxs,Nrows)
 allOnes = ones(Nrows,1);
 output = allOnes*(maxs-mins) .* rand(Nrows,length(mins)) + allOnes*mins;
 end % Ends fcn_INTERNAL_generateRandomInRange
+
+function cam = getCameraView(ax, filename)
+% getCameraView  Get camera settings from axes and optionally save to file
+% cam = getCameraView(ax)
+% cam = getCameraView(ax, filename)
+% ax       : axes handle (use gca if omitted)
+% filename : optional .mat filename to save the camera struct
+%
+% cam is a struct with fields: Position, Target, UpVector, ViewAngle, Projection
+
+if nargin < 1 || isempty(ax)
+    ax = gca;
+end
+
+cam.Position   = campos(ax);
+cam.Target     = camtarget(ax);
+cam.UpVector   = camup(ax);
+cam.ViewAngle  = camva(ax);
+cam.Projection = camproj(ax);
+
+if nargin == 2 && ~isempty(filename)
+    save(filename, 'cam');
+end
+end
+
+%% fcn_INTERNAL_setCameraView
+function fcn_INTERNAL_setCameraView(cam, ax)
+% setCameraView  Apply a camera struct to axes used by pcshow
+% setCameraView(cam)
+% setCameraView(cam, ax)
+% cam : struct returned by getCameraView (or loaded from .mat)
+% ax  : target axes handle (defaults to gca)
+
+if nargin < 2 || isempty(ax)
+    ax = gca;
+end
+
+if ischar(cam) || isstring(cam)           % support passing a filename
+    s = load(cam, 'cam');
+    cam = s.cam;
+end
+
+% Apply in sensible order: projection, position/target, upvector, viewangle
+camproj(ax, cam.Projection);
+camup(ax, cam.UpVector);
+campos(ax, cam.Position);
+camtarget(ax, cam.Target);
+camva(ax, cam.ViewAngle);
+drawnow;
+end % Ends fcn_INTERNAL_setCameraView
+
+
+
+

@@ -7,6 +7,10 @@
 % 2026_04_09 by Aneesh Batchu, abb6486@psu.edu
 % - In script_test_fcn_DEMImport_queryElevationsFromMatchedTiles
 %   % * Wrote this code originally
+% 
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Cleaned up test scripts
 
 %% DEMO Case: Query LTI test-track elevations using matched DEM tiles
 
@@ -93,7 +97,8 @@ fcn_DebugTools_makeDirectory(localRootFolder);
         queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, ...
         mergeMethod, localRootFolder, figNum);
 
-%% Display results
+%%%%
+%  Display results
 fprintf(1,'\nMerged elevations (m):\n');
 disp(mergedElevations);
 
@@ -109,7 +114,8 @@ difference_InMeters = mergedElevations - trueAltitude_InMeters;
 fprintf(1,'\nDifference between merged DEM elevations and truth (m):\n');
 disp(difference_InMeters);
 
-%% Assertions
+%%%%
+%  Assertions
 
 % 1. Output sizes
 assert(isequal(size(mergedElevations), [size(queryLatLon,1), 1]));

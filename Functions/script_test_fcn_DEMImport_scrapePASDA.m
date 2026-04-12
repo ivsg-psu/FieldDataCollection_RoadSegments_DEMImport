@@ -41,7 +41,10 @@ fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 % figure(figNum); clf;
 
 % Call the function
-fcn_DEMImport_scrapePASDA(-1)
+warning('This operation is VERY slow (30 minutes). The user must uncomment to continue');
+if 1==0
+	fcn_DEMImport_scrapePASDA(-1)
+end
 
 % sgtitle(titleString, 'Interpreter','none');
 % 
@@ -87,9 +90,11 @@ if ~exist('scrapeDirectoryResultPASDA','var')
 end
 
 dataStringToExtract = 'usgs';
-
-% Call the function
-fcn_DEMImport_scrapePASDA(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+warning('This operation is VERY slow (30 minutes). The user must uncomment to continue');
+if 1==0
+	% Call the function
+	fcn_DEMImport_scrapePASDA(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+end
 
 % sgtitle(titleString, 'Interpreter','none');
 % 
@@ -137,7 +142,10 @@ end
 dataStringToExtract = 'lidar';
 
 % Call the function
-fcn_DEMImport_scrapePASDA(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+warning('This operation is VERY slow (30 minutes). The user must uncomment to continue');
+if 1==0
+	fcn_DEMImport_scrapePASDA(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+end
 
 % sgtitle(titleString, 'Interpreter','none');
 % 

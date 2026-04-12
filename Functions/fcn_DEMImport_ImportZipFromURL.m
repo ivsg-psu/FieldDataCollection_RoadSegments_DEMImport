@@ -1,10 +1,10 @@
-function saveTime = fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
-% fcn_DEMImport_ImportZipFromURL  imports PAMAP DEMs from the PASDA
+function saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, varargin)
+% fcn_DEMImport_importZipFromURL  imports PAMAP DEMs from the PASDA
 % database
 %
 % FORMAT:
 %
-%      fcn_DEMImport_ImportZipFromURL(URLtoImport, (estimatedSeconds), (figNum));
+%      fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (PASDA_URL_Prefix), (rootOfLargeDataPath), (figNum));
 %
 % INPUTS:
 %
@@ -13,6 +13,10 @@ function saveTime = fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
 %      (OPTIONAL INPUTS)
 %
 %      estimatedSeconds - an estimate of the download time in seconds
+% 
+%      PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/';
+%
+%      rootOfLargeDataPath = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
 %
 %      figNum - a figure number to plot results. If set to -1,
 %      skips any input checking or debugging, no figures will be generated,
@@ -28,7 +32,7 @@ function saveTime = fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
 %
 % EXAMPLES:
 %
-%     See the script: script_test_fcn_DEMImport_ImportZipFromURL
+%     See the script: script_test_fcn_DEMImport_importZipFromURL
 %     for a full test suite.
 %
 % This function was written on 2026_03_31 by S. Brennan
@@ -37,14 +41,18 @@ function saveTime = fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
 % REVISION HISTORY:
 %
 % 2026_03_31 by Sean Brennan, sbrennan@psu.edu
-% - In fcn_DEMImport_ImportZipFromURL
+% - In fcn_DEMImport_importZipFromURL
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
 %
 % 2026_04_02 by Sean Brennan, sbrennan@psu.edu
-% - In fcn_DEMImport_ImportZipFromURL
+% - In fcn_DEMImport_importZipFromURL
 %   % * Added estimated completion time as input, actual time as output
 %   % * Added error reporting
-
+%
+% 2026_04_10 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_importZipFromURL
+%   % * Added estimated completion time as input, actual time as output
+%   % * Added error reporting
 
 % TO-DO:
 %
@@ -59,7 +67,7 @@ function saveTime = fcn_DEMImport_ImportZipFromURL(URLtoImport, varargin)
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 3; % The largest Number of argument inputs to the function
+MAX_NARGIN = 5; % The largest Number of argument inputs to the function
 flag_max_speed = 0; % The default. This runs code with all error checking
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; % Flag to plot the results for debugging
@@ -118,25 +126,33 @@ end
 estimatedSeconds = []; % Default case
 
 % Check for user input
-if 3 <= nargin
+if 2 <= nargin
     temp = varargin{1};
     if ~isempty(temp)
         % Set the estimatedSeconds
         estimatedSeconds = temp;
     end
 end
-% 
-% % Does the user want to specify excursion_definition?
-% flag_use_excursion_definition = 0; % Default case
-% flag_excursion_is_a_point_type = 1; % Default case
-% if 4 <= nargin
-%     temp = varargin{2};
-%     if ~isempty(temp)
-%         % Set the excursion values
-%         [flag_excursion_is_a_point_type, excursion_definition] = fcn_Laps_checkZoneType(temp, 'excursion_definition',-1);
-%         flag_use_excursion_definition = 1;
-%     end
-% end
+
+% Does the user want to specify PASDA_URL_Prefix?
+PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/'; % Default value
+if 3 <= nargin
+    temp = varargin{2};
+    if ~isempty(temp)
+        PASDA_URL_Prefix = temp;
+    end
+end
+
+
+% Does the user want to specify rootOfLargeDataPath?
+rootOfLargeDataPath = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
+if 4 <= nargin
+    temp = varargin{3};
+    if ~isempty(temp)
+        rootOfLargeDataPath = temp;
+    end
+end
+
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
@@ -159,10 +175,6 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tic
-
-PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/';
-rootOfLargeDataPath = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
-
 
 % Create the URL to the directory
 lastIndex = find(URLtoImport=='/',1,"last");

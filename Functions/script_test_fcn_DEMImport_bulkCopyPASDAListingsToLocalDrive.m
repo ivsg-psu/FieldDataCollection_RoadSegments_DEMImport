@@ -52,8 +52,10 @@ end
 dataStringToExtract = 'pamap';
 
 % Call the function
-fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
-
+warning('This function takes a VERY long time to run (hours). The user must uncomment to run it.')
+if 1==0
+	fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+end
 % sgtitle(titleString, 'Interpreter','none');
 % 
 % % Check variable types
@@ -100,8 +102,10 @@ end
 dataStringToExtract = 'usgs';
 
 % Call the function
-fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
-
+warning('This function takes a VERY long time to run (hours). The user must uncomment to run it.')
+if 1==0
+	fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+end
 % sgtitle(titleString, 'Interpreter','none');
 % 
 % % Check variable types
@@ -148,8 +152,10 @@ end
 dataStringToExtract = 'lidar';
 
 % Call the function
-fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
-
+warning('This function takes a VERY long time to run (hours). The user must uncomment to run it.')
+if 1==0
+	fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
+end
 % sgtitle(titleString, 'Interpreter','none');
 % 
 % % Check variable types

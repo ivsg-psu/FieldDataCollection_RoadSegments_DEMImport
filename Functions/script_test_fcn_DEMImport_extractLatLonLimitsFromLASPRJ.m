@@ -20,204 +20,248 @@
 %% Set up the workspace
 close all
 
-%% Code demos start here
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%   _____                              ____   __    _____          _
-%  |  __ \                            / __ \ / _|  / ____|        | |
-%  | |  | | ___ _ __ ___   ___  ___  | |  | | |_  | |     ___   __| | ___
-%  | |  | |/ _ \ '_ ` _ \ / _ \/ __| | |  | |  _| | |    / _ \ / _` |/ _ \
-%  | |__| |  __/ | | | | | (_) \__ \ | |__| | |   | |___| (_) | (_| |  __/
-%  |_____/ \___|_| |_| |_|\___/|___/  \____/|_|    \_____\___/ \__,_|\___|
-%
-%
-% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Demos%20Of%20Code
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Figures start with 1
-
-close all;
-fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-
-%% DEMO case: load entire PAMAP database
-figNum = 10001;
-titleString = sprintf('DEMO case: simple demo of extracting limits');
-fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
-figure(figNum); clf;
-
-lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.las";
-prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
-
-% Call the function
-[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (figNum));
-
-sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(isnumeric(limitsLatLon));
-assert(isnumeric(limitsFt));
-
-% Check variable sizes
-assert(isequal(size(limitsLatLon),[1 4]));
-assert(isequal(size(limitsFt),[1 4]));
-
-% Check variable values
-assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
-assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),figNum));
-
-
-%% Test cases start here. These are very simple, usually trivial
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  _______ ______  _____ _______ _____
-% |__   __|  ____|/ ____|__   __/ ____|
-%    | |  | |__  | (___    | | | (___
-%    | |  |  __|  \___ \   | |  \___ \
-%    | |  | |____ ____) |  | |  ____) |
-%    |_|  |______|_____/   |_| |_____/
-%
-%
-%
-% See: https://patorjk.com/software/taag/#p=display&f=Big&t=TESTS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Figures start with 2
-
-close all;
-fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
-
-%% TEST case: Weird case 1
-figNum = 20001;
-titleString = sprintf('TEST case: Weird case 1');
-fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
-figure(figNum); clf;
-
-
-
-
-%% Fast Mode Tests
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ______        _     __  __           _        _______        _
-% |  ____|      | |   |  \/  |         | |      |__   __|      | |
-% | |__ __ _ ___| |_  | \  / | ___   __| | ___     | | ___  ___| |_ ___
-% |  __/ _` / __| __| | |\/| |/ _ \ / _` |/ _ \    | |/ _ \/ __| __/ __|
-% | | | (_| \__ \ |_  | |  | | (_) | (_| |  __/    | |  __/\__ \ |_\__ \
-% |_|  \__,_|___/\__| |_|  |_|\___/ \__,_|\___|    |_|\___||___/\__|___/
-%
-%
-% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Fast%20Mode%20Tests
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Figures start with 8
-
-close all;
-fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
-
-%% Basic example - NO FIGURE
-figNum = 80001;
-fprintf(1,'Figure: %.0f: FAST mode, empty figNum\n',figNum);
-figure(figNum); close(figNum);
-
-lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.las";
-prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
-
-% Call the function
-[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, ([]));
-
-% Check variable types
-assert(isnumeric(limitsLatLon));
-assert(isnumeric(limitsFt));
-
-% Check variable sizes
-assert(isequal(size(limitsLatLon),[1 4]));
-assert(isequal(size(limitsFt),[1 4]));
-
-% Check variable values
-assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
-assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==figNum));
-
-
-%% Basic fast mode - NO FIGURE, FAST MODE
-figNum = 80002;
-fprintf(1,'Figure: %.0f: FAST mode, figNum=-1\n',figNum);
-figure(figNum); close(figNum);
-
-lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.las";
-prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
-
-% Call the function
-[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (-1));
-
-% Check variable types
-assert(isnumeric(limitsLatLon));
-assert(isnumeric(limitsFt));
-
-% Check variable sizes
-assert(isequal(size(limitsLatLon),[1 4]));
-assert(isequal(size(limitsFt),[1 4]));
-
-% Check variable values
-assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
-assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==figNum));
-
-
-%% Compare speeds of pre-calculation versus post-calculation versus a fast variant
-figNum = 80003;
-fprintf(1,'Figure: %.0f: FAST mode comparisons\n',figNum);
-figure(figNum);
-close(figNum);
-
-lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.las";
-prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
-
-
-Niterations = 2;
-
-% Do calculation without pre-calculation
-tic;
-for ith_test = 1:Niterations
-	% Call the function
-	[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, ([]));
-end
-slow_method = toc;
-
-% Do calculation with pre-calculation, FAST_MODE on
-tic;
-for ith_test = 1:Niterations
-	% Call the function
-	[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (-1));
-end
-fast_method = toc;
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==figNum));
-
-% Plot results as bar chart
-figure(373737);
-clf;
-hold on;
-
-X = categorical({'Normal mode','Fast mode'});
-X = reordercats(X,{'Normal mode','Fast mode'}); % Forces bars to appear in this exact order, not alphabetized
-Y = [slow_method fast_method ]*1000/Niterations;
-bar(X,Y)
-ylabel('Execution time (Milliseconds)')
-
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==figNum));
-
+% %% Code demos start here
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %
+% %   _____                              ____   __    _____          _
+% %  |  __ \                            / __ \ / _|  / ____|        | |
+% %  | |  | | ___ _ __ ___   ___  ___  | |  | | |_  | |     ___   __| | ___
+% %  | |  | |/ _ \ '_ ` _ \ / _ \/ __| | |  | |  _| | |    / _ \ / _` |/ _ \
+% %  | |__| |  __/ | | | | | (_) \__ \ | |__| | |   | |___| (_) | (_| |  __/
+% %  |_____/ \___|_| |_| |_|\___/|___/  \____/|_|    \_____\___/ \__,_|\___|
+% %
+% %
+% % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Demos%20Of%20Code
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Figures start with 1
+% 
+% close all;
+% fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
+% 
+% %% DEMO case: load entire PAMAP database
+% figNum = 10001;
+% titleString = sprintf('DEMO case: simple demo of extracting limits');
+% fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+% figure(figNum); clf;
+% 
+% 
+% % Example PASDA-relative path beginning at download\...
+% zipPathEntry = 'download\pamap\pamap_lidar\cycle1\DEM\North\2006\20000000\26001940PAN_dem.zip';
+% % thisURL = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2006/20000000/26001940PAN_dem.zip';
+% 
+% % Define a file name and directory to save results
+% localRootFolder = fullfile(pwd,'LargeData','zipTestFiles_LAS');
+% fcn_DebugTools_makeDirectory(localRootFolder);
+% 
+% % Call the function
+% localZipFile = fcn_DEMImport_ensureLocalZipFromPASDAPath(zipPathEntry, localRootFolder, figNum);
+% 
+% URHERE
+% 
+% % Create a unique temporary folder
+% tmpFolder = fullfile(pwd,'TempExtract');
+% if exist(tmpFolder,'dir')
+% 	rmdir(tmpFolder, 's');
+% end
+% 
+% % tmpFolder = fullfile(tmpBase, ['ziptmp_' char(java.util.UUID.randomUUID)]);
+% mkdir(tmpFolder);
+% 
+% % For debugging
+% % zipFile = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\DEMsForPA\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000\30001180PAN_dem.zip';
+% 
+% % Unzip into temporary folder
+% s = dir(zipFile);
+% filesize_bytes = s.bytes;
+% 
+% if filesize_bytes==0
+% 	return;
+% else
+% 	try
+% 		unzip(zipFile, tmpFolder);
+% 	catch
+% 		warning('Invalid zip file found (skipping): %s\n',zipFile);
+% 		return;
+% 
+% 	end
+% end
+% 
+% URHERE
+% 
+% lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.las";
+% prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
+% 
+% % Call the function
+% [limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (figNum));
+% 
+% sgtitle(titleString, 'Interpreter','none');
+% 
+% % Check variable types
+% assert(isnumeric(limitsLatLon));
+% assert(isnumeric(limitsFt));
+% 
+% % Check variable sizes
+% assert(isequal(size(limitsLatLon),[1 4]));
+% assert(isequal(size(limitsFt),[1 4]));
+% 
+% % Check variable values
+% assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
+% 
+% % Make sure plot opened up
+% assert(isequal(get(gcf,'Number'),figNum));
+% 
+% 
+% %% Test cases start here. These are very simple, usually trivial
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %
+% %  _______ ______  _____ _______ _____
+% % |__   __|  ____|/ ____|__   __/ ____|
+% %    | |  | |__  | (___    | | | (___
+% %    | |  |  __|  \___ \   | |  \___ \
+% %    | |  | |____ ____) |  | |  ____) |
+% %    |_|  |______|_____/   |_| |_____/
+% %
+% %
+% %
+% % See: https://patorjk.com/software/taag/#p=display&f=Big&t=TESTS
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Figures start with 2
+% 
+% close all;
+% fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
+% 
+% %% TEST case: Weird case 1
+% figNum = 20001;
+% titleString = sprintf('TEST case: Weird case 1');
+% fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+% figure(figNum); clf;
+% 
+% 
+% 
+% 
+% %% Fast Mode Tests
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %
+% %  ______        _     __  __           _        _______        _
+% % |  ____|      | |   |  \/  |         | |      |__   __|      | |
+% % | |__ __ _ ___| |_  | \  / | ___   __| | ___     | | ___  ___| |_ ___
+% % |  __/ _` / __| __| | |\/| |/ _ \ / _` |/ _ \    | |/ _ \/ __| __/ __|
+% % | | | (_| \__ \ |_  | |  | | (_) | (_| |  __/    | |  __/\__ \ |_\__ \
+% % |_|  \__,_|___/\__| |_|  |_|\___/ \__,_|\___|    |_|\___||___/\__|___/
+% %
+% %
+% % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Fast%20Mode%20Tests
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Figures start with 8
+% 
+% close all;
+% fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
+% 
+% %% Basic example - NO FIGURE
+% figNum = 80001;
+% fprintf(1,'Figure: %.0f: FAST mode, empty figNum\n',figNum);
+% figure(figNum); close(figNum);
+% 
+% lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.las";
+% prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
+% 
+% % Call the function
+% [limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, ([]));
+% 
+% % Check variable types
+% assert(isnumeric(limitsLatLon));
+% assert(isnumeric(limitsFt));
+% 
+% % Check variable sizes
+% assert(isequal(size(limitsLatLon),[1 4]));
+% assert(isequal(size(limitsFt),[1 4]));
+% 
+% % Check variable values
+% assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
+% 
+% % Make sure plot did NOT open up
+% figHandles = get(groot, 'Children');
+% assert(~any(figHandles==figNum));
+% 
+% 
+% %% Basic fast mode - NO FIGURE, FAST MODE
+% figNum = 80002;
+% fprintf(1,'Figure: %.0f: FAST mode, figNum=-1\n',figNum);
+% figure(figNum); close(figNum);
+% 
+% lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.las";
+% prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
+% 
+% % Call the function
+% [limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (-1));
+% 
+% % Check variable types
+% assert(isnumeric(limitsLatLon));
+% assert(isnumeric(limitsFt));
+% 
+% % Check variable sizes
+% assert(isequal(size(limitsLatLon),[1 4]));
+% assert(isequal(size(limitsFt),[1 4]));
+% 
+% % Check variable values
+% assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
+% 
+% % Make sure plot did NOT open up
+% figHandles = get(groot, 'Children');
+% assert(~any(figHandles==figNum));
+% 
+% 
+% %% Compare speeds of pre-calculation versus post-calculation versus a fast variant
+% figNum = 80003;
+% fprintf(1,'Figure: %.0f: FAST mode comparisons\n',figNum);
+% figure(figNum);
+% close(figNum);
+% 
+% lasFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.las";
+% prjFilepath = "C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\TempExtract\13736E388029N.prj";
+% 
+% 
+% Niterations = 2;
+% 
+% % Do calculation without pre-calculation
+% tic;
+% for ith_test = 1:Niterations
+% 	% Call the function
+% 	[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, ([]));
+% end
+% slow_method = toc;
+% 
+% % Do calculation with pre-calculation, FAST_MODE on
+% tic;
+% for ith_test = 1:Niterations
+% 	% Call the function
+% 	[limitsLatLon, limitsFt] = fcn_DEMImport_extractLatLonLimitsFromLASPRJ(lasFilepath, prjFilepath, (-1));
+% end
+% fast_method = toc;
+% 
+% % Make sure plot did NOT open up
+% figHandles = get(groot, 'Children');
+% assert(~any(figHandles==figNum));
+% 
+% % Plot results as bar chart
+% figure(373737);
+% clf;
+% hold on;
+% 
+% X = categorical({'Normal mode','Fast mode'});
+% X = reordercats(X,{'Normal mode','Fast mode'}); % Forces bars to appear in this exact order, not alphabetized
+% Y = [slow_method fast_method ]*1000/Niterations;
+% bar(X,Y)
+% ylabel('Execution time (Milliseconds)')
+% 
+% 
+% % Make sure plot did NOT open up
+% figHandles = get(groot, 'Children');
+% assert(~any(figHandles==figNum));
+% 
 
 %% BUG cases
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

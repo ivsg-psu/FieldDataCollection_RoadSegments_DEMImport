@@ -56,7 +56,10 @@ rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\
 flagIgnoreLoadFiles = false;
 
 % Call the function
-[LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+warning('This function takes a VERY long time to run (hours). The user must uncomment to run it.')
+if 1==0
+	[LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+end
 
 % sgtitle(titleString, 'Interpreter','none');
 % 
@@ -131,8 +134,10 @@ rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\
 flagIgnoreLoadFiles = 1;
 
 % Call the function
-[LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
-
+warning('This function takes a VERY long time to run (hours). The user must uncomment to run it.')
+if 1==0
+	[LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+end
 % sgtitle(titleString, 'Interpreter','none');
 % 
 % % Check variable types
