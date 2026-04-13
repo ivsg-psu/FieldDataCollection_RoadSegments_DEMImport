@@ -56,6 +56,18 @@ function [overlappingLatLonLimits, overlappingZipPaths, overlapEntriesFlags] = .
 % - In fcn_DEMImport_selectEntriesByBoundingBox
 %   % * Added plotting output using fcn_DEMImport_plotLatLonLimits
 
+% TO-DO:
+%
+% 2026_04_13 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_selectEntriesByBoundingBox
+%   % * Need to rename the input and output variables for better clarity.
+%   %   % For example, user does not know what "matching" means in
+%   %   % matchingLatLonLimits. Why is this different than LatLonLimits?
+%   %   % Comments in header also do not explain inputs/outputs very well
+%   % * Need to rename outputs as well - current names are confusing
+%   % * Need to allow user to input margin of search, with a good
+%   %   % suggestion. Margin should be at least he size of the DEM box width in
+%   %   % the PASDA data
 
 %% Debugging and Input checks
 
@@ -178,6 +190,8 @@ overlappingZipPaths = matchingZipPaths(overlapEntriesFlags,:);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
 
+	
+
 	clear plotFormat
 	plotFormat.Color = [0.5 0.5 1];
 	plotFormat.Marker = '.';
@@ -186,6 +200,9 @@ if flag_do_plots
 	plotFormat.LineWidth = 2;
 
 	fcn_DEMImport_plotLatLonLimits(overlappingLatLonLimits, (plotFormat), (figNum));
+
+	plotFormat.Color = [1 0 0];
+	fcn_DEMImport_plotLatLonLimits(queryBoundingBox, (plotFormat), (figNum));
 
 	if 1==0
 		fprintf(1,'\n\n Here are the DEMs within the query bounding box:\n');

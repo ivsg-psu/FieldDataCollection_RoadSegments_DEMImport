@@ -89,6 +89,16 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 % - In fcn_DEMImport_queryElevationsFromMatchedTiles
 %   % * Wrote this code originally
 
+
+% TO-DO:
+%
+% 2026_04_13 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * The optional inputs are ONLY filled if not in fast mode. This is a
+%   %   % bug
+%   % * The test script is not in standard form (variable type, then size,
+%   %   % then values). Need to fix this.
+
 %% Debugging and Input checks
 
 % Check if flag_max_speed set. This occurs if the figNum variable input

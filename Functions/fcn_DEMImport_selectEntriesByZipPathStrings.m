@@ -12,7 +12,8 @@ function [matchingLatLonLimits, matchingZipPaths, matchingEntriesFlags] = ...
 % 
 % INPUTS:
 % 
-%   requiredStrings: cell array or string array, e.g. {'DEM','North'}
+%   requiredStrings: cell array or string array of strings that must be in
+%   the results, e.g. {'DEM','North'}
 % 
 %   LatLonLimits: N x 4 matrix [lat_min lat_max lon_min lon_max]
 % 
@@ -55,7 +56,10 @@ function [matchingLatLonLimits, matchingZipPaths, matchingEntriesFlags] = ...
 % 2026_04_10 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_selectEntriesByZipPathStrings
 %   % * Added plotting output using fcn_DEMImport_plotLatLonLimits
-
+%
+% 2026_04_13 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Added ability to handle ' or ' string options
 
 %% Debugging and Input checks
 
@@ -149,8 +153,20 @@ zipPaths = string(zipPaths(:));  % force column
 matchingEntriesFlags = true(size(zipPaths));
 
 for ith_string = 1:numel(requiredStrings)
-    matchingEntriesFlags = matchingEntriesFlags & ...
-        contains(zipPaths, requiredStrings(ith_string), 'IgnoreCase', true);
+	thisString = requiredStrings(ith_string);
+	stringParts = fcn_INTERNAL_splitByOr(thisString);
+	
+	for ith_part = 1:size(stringParts,1)
+		thisStringPart = stringParts(ith_part,1);
+		if ith_part==1
+			thisFlag = contains(zipPaths, thisStringPart, 'IgnoreCase', true);
+		else
+			thisFlag = thisFlag | contains(zipPaths, thisStringPart, 'IgnoreCase', true);
+		end
+	end
+
+    matchingEntriesFlags = matchingEntriesFlags & thisFlag;
+        
 end
 
 % Apply row selection
@@ -203,3 +219,23 @@ end % Ends main function
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+%% fcn_INTERNAL_splitByOr
+function stringParts = fcn_INTERNAL_splitByOr(thisString)
+
+% thisString = 'One OR two oR Three or four';
+% Returns
+% stringParts =
+% 
+%   1×4 cell array
+% 
+%     {'One'}    {'two'}    {'Three'}    {'four'}
+
+keyWord = ' or ';
+stringParts = regexp(thisString, ['(?i)', regexptranslate('escape', keyWord)], 'split');
+if size(stringParts,1)==1 && size(stringParts,2)>1
+	stringParts = stringParts';
+end
+
+end % ends fcn_INTERNAL_splitByOr
+

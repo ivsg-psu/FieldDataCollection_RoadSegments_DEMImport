@@ -10,6 +10,10 @@
 % 2026_04_10 by Sean Brennan, sbrennan@psu.edu
 % - In script_test_fcn_DEMImport_selectEntriesByZipPathStrings
 %   % * Improved case testing
+% 
+% 2026_04_13 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Added North or South testing case
 
 %% Set up the workspace
 close all
@@ -133,6 +137,70 @@ end
 
 % INPUT
 requiredStrings = {'\DEM\', '\North\'}; 
+
+% Call the function
+[matchingLatLonLimits, matchingZipPaths, matchingEntriesFlags] = ... 
+    fcn_DEMImport_selectEntriesByZipPathStrings(requiredStrings, LatLonLimits, zipPaths, (figNum));
+
+% Check variable types
+assert(isnumeric(matchingLatLonLimits));
+assert(isstring(matchingZipPaths));
+assert(islogical(matchingEntriesFlags));
+
+% Check variable sizes
+Ninputs = size(LatLonLimits,1);
+Nmatches = size(matchingLatLonLimits,1);
+assert(size(matchingZipPaths,1)==Nmatches);
+assert(size(matchingEntriesFlags,1)==Ninputs);
+assert(size(matchingLatLonLimits,2)==4);
+assert(size(matchingZipPaths,2)>=0);
+assert(size(matchingEntriesFlags,2)==1);
+
+% Check variable values
+% assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.1900    0.2000    1.8900    1.9000],4)));
+
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+
+%% DEMO case: Select the entries when the requiredString is {DEM, North or South} 
+
+figNum = 10003;
+titleString = sprintf('DEMO case:  Select the entries when the requiredString is {DEM, North or South}');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load LatLonLimits and zipPaths (INPUTS)
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+
+if 1==0
+	% Do dumb load
+	load(pamap_lidar_limitsFile);
+else
+	% Do smart load, one variable at a time with warnings
+
+	matlabFileObject = matfile(pamap_lidar_limitsFile);        % returns matlab.io.MatFile object
+	vars = who(matlabFileObject);             % variable names in the file (no full load)
+	expectedVariables = {'LatLonLimits', 'zipPaths'};
+
+	for ith_expectedVariable = 1:length(expectedVariables)
+		thisExpectedVariable = expectedVariables{ith_expectedVariable};
+		% Read a variable only if it exists
+		if ismember(thisExpectedVariable, vars)
+			% loads only that variable/part
+			commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);',thisExpectedVariable);
+			eval(commandString);
+		else
+			warning('Variable %s not found in the limits file: %s.', thisExpectedVariable, pamap_lidar_limitsFile);
+		end
+	end
+end
+
+% INPUT
+requiredStrings = {'\DEM\', '\North\ or \South\'}; 
 
 % Call the function
 [matchingLatLonLimits, matchingZipPaths, matchingEntriesFlags] = ... 

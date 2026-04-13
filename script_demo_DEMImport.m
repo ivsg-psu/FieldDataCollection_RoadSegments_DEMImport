@@ -121,6 +121,22 @@
 %   % Renamed from fcn_DEMImport_ImportZipFromURL.m
 % - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
 %   % * Moved fcn_INTERNAL_timeStringFromSeconds into DebugTools
+%
+% (new release)
+%
+% 2026_04_13 by Sean Brennan, sbrennan@psu.edu
+% - In script_demo_DEMImport
+%   % * Added PennDOT network query example
+%   % * Added PennDOT network info into Data folder
+% - In script_test_fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Added North or South testing case
+% - In script_test_fcn_DEMImport_queryElevations
+%   % * Wrote the code originally
+% - In fcn_DEMImport_queryElevations
+%   % * Wrote the code originally
+% - In fcn_DEMImport_selectEntriesByZipPathStrings
+%   % * Added ability to handle ' or ' string options
+
 
 % TO-DO:
 %
@@ -129,6 +145,22 @@
 %   % * Need to be able to handle cases where the input,
 %   overlappingLatLonLimits, may be empty. This happens when the user might
 %   do a query over a location where there is no limit definition files.
+%
+% 2026_04_13 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * The optional inputs are ONLY filled if not in fast mode. This is a
+%   %   % bug
+%   % * The test script is not in standard form (variable type, then size,
+%   %   % then values). Need to fix this.
+% - In fcn_DEMImport_selectEntriesByBoundingBox
+%   % * Need to rename the input and output variables for better clarity.
+%   %   % For example, user does not know what "matching" means in
+%   %   % matchingLatLonLimits. Why is this different than LatLonLimits?
+%   %   % Comments in header also do not explain inputs/outputs very well
+%   % * Need to rename outputs as well - current names are confusing
+%   % * Need to allow user to input margin of search, with a good
+%   %   % suggestion. Margin should be at least he size of the DEM box width in
+%   %   % the PASDA data
 
 %% Make sure we are running out of root directory
 st = dbstack; 
@@ -454,8 +486,33 @@ LLAdata = fcn_INTERNAL_generateRandomInRange(mins,maxs,Nrows);
     multipleMatchFlags, numMatchesPerPoint] = ...
     fcn_DEMImport_assignTilesToQueryPoints(queryLatLon, overlappingLatLonLimits, figNum);
 
+%% DEMO: Show how to query elevation
+figNum = 10007;
+titleString = sprintf('DEMO case: Show how to query elevation');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
 
+%% PennDOT Elevation
+% Calculates elevation for PennDOT segments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  _____                 _____   ____ _______   ______ _                 _   _
+% |  __ \               |  __ \ / __ \__   __| |  ____| |               | | (_)
+% | |__) |__ _ __  _ __ | |  | | |  | | | |    | |__  | | _____   ____ _| |_ _  ___  _ __
+% |  ___/ _ \ '_ \| '_ \| |  | | |  | | | |    |  __| | |/ _ \ \ / / _` | __| |/ _ \| '_ \
+% | |  |  __/ | | | | | | |__| | |__| | | |    | |____| |  __/\ V / (_| | |_| | (_) | | | |
+% |_|   \___|_| |_|_| |_|_____/ \____/  |_|    |______|_|\___| \_/ \__,_|\__|_|\___/|_| |_|
+%
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=PennDOT+Elevation&x=none&v=4&h=4&w=80&we=false
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
+sourceDataFileName = 'PennDOT_LLcoordinates';
+sourceDataFilePath = fullfile(pwd,'Data',cat(2,sourceDataFileName,'.mat'));
+if 1==1 && flag_loadDataFilesWhenPossible && exist(sourceDataFilePath,'file')
+    load(sourceDataFilePath,'PennDOT_LLSegments_matrix','PennDOT_LLSegments_cellArray','usableTableRows');
+else
+	error('Unable to find the PennDOT segments file inside the Data folder. This can be obtained form the PennDOTSHP repo.');
+end
 
 %% Test Track Plotting
 % Creates an image of the test track using DEMs
