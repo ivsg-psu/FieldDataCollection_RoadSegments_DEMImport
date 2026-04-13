@@ -11,15 +11,10 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 % INPUTS:
 %      queryLatLon:  N x 2 matrix of query latitude/longitude points
 %    
-%      matchingTileIndexMatrix: N x K numeric matrix of tile indices (NaN
-%      padded)
-%    
-%          - each row corresponds to one query point
-%          - each non-NaN entry in a row is the index of a DEM tile that
-%            contains that query point
-%    
-%      overlappingZipPaths: M x 1 cell array or string array of candidate DEM
-%      zip path entries
+%      LatLonLimits: N x 4 matrix [lat_min lat_max lon_min lon_max] of
+%      LatLon limits from DEM files
+% 
+%      zipPaths: N x 1 cell array of zip path strings from DEM files
 %    
 %      (OPTIONAL INPUTS)
 %    
@@ -81,6 +76,10 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 % 2026_04_13 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_queryElevations
 %   % * Wrote this code originally
+% 2026_04_13 by Aneesh Batchu, abb6486@psu.edu
+% - In fcn_DEMImport_queryElevations
+%   % * Modified the instructions of the inputs
+
 
 %% Debugging and Input checks
 
