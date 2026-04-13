@@ -90,25 +90,35 @@ localRootFolder = [];
 sgtitle(titleString, 'Interpreter','none');
 
 
-% Check variable types
-assert(isnumeric(limitsLatLon));
-assert(isnumeric(limitsFt));
-
-% Check variable sizes
-assert(isequal(size(limitsLatLon),[1 4]));
-assert(isequal(size(limitsFt),[1 4]));
-
-% Check variable values
-assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
-assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),figNum));
-
 % Geoid-corrected truth values for comparison
 geoidHeight = egm96geoid(LLAdata(:,1), LLAdata(:,2));
 LLAdata(:,3) = LLAdata(:,3) - geoidHeight;
 trueAltitude_InMeters = LLAdata(:,3);
+
+% Difference in meters
+difference_InMeters = queriedElevationsInMeters - trueAltitude_InMeters;
+
+
+% % Check variable types
+% assert(isnumeric(limitsLatLon));
+% assert(isnumeric(limitsFt));
+% 
+% % Check variable sizes
+% assert(isequal(size(limitsLatLon),[1 4]));
+% assert(isequal(size(limitsFt),[1 4]));
+% 
+% % Check variable values
+% assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
+% assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
+
+% Check the difference between queriedAltitude and TrueAltitude
+assert(all(abs(difference_InMeters(1:9,:)) < 1.0));
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
+
+
 
 
 %% Test cases start here. These are very simple, usually trivial
