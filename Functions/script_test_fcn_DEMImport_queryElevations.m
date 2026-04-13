@@ -6,11 +6,16 @@
 % 2026_04_13 by Sean Brennan, sbrennan@psu.edu
 % - In script_test_fcn_DEMImport_queryElevations
 %   % * Wrote the code originally
+% 
+% 2026_04_13 by Aneesh Batchu, abb6486@psu.edu
+% - In script_test_fcn_DEMImport_queryElevations
+%   % * Added a some DEMO and TEST cases
 
 % TO-DO:
 %
 % 2026_04_13 by Sean Brennan, sbrennan@psu.edu
 % - (fill in items here)
+
 
 
 %% Set up the workspace
@@ -90,25 +95,98 @@ localRootFolder = [];
 sgtitle(titleString, 'Interpreter','none');
 
 
-% Check variable types
-assert(isnumeric(limitsLatLon));
-assert(isnumeric(limitsFt));
-
-% Check variable sizes
-assert(isequal(size(limitsLatLon),[1 4]));
-assert(isequal(size(limitsFt),[1 4]));
-
-% Check variable values
-assert(isequal(round(limitsLatLon,4),[40.3788   40.3862  -79.8856  -79.8759]));
-assert(isequal(round(limitsFt/1E6,4),round([0.3880    0.3907    1.3737    1.3763],4)));
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),figNum));
-
 % Geoid-corrected truth values for comparison
 geoidHeight = egm96geoid(LLAdata(:,1), LLAdata(:,2));
 LLAdata(:,3) = LLAdata(:,3) - geoidHeight;
 trueAltitude_InMeters = LLAdata(:,3);
+
+% Difference in meters
+difference_InMeters = queriedElevationsInMeters - trueAltitude_InMeters;
+
+
+% Check variable types
+assert(isnumeric(queriedElevationsInMeters));
+
+% Check variable sizes
+assert(isequal(size(queriedElevationsInMeters),size(trueAltitude_InMeters)));
+
+% Check variable values
+assert(all(abs(difference_InMeters(1:9,:)) < 1.0));
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
+
+
+
+%% DEMO case: show query using PennDOT data
+figNum = 10001;
+titleString = sprintf('DEMO case: show query using PennDOT data');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); close(figNum);
+
+%%%%%%%%%%%%%
+% Load statewide DEM metadata
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+matlabFileObject = matfile(pamap_lidar_limitsFile);
+vars = who(matlabFileObject);
+expectedVariables = {'FtLimits', 'LatLonLimits', 'zipPaths'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
+end
+
+
+%%%%%%%%%%%%%
+% Define query. In this case, using PennDOT points
+LLdata = [40.128726992872387 -74.969118497838778
+  40.128519123466461 -74.969373007626771
+  40.128478669903480 -74.969467478055307
+  40.128443998934095 -74.969654533348603
+  40.128478237186151 -74.969894470666034
+  40.128550595727056 -74.970091084932264
+  40.128641957993828 -74.970189463032298
+  40.128757993170723 -74.970277553625692
+  40.128869025828763 -74.970305514587224
+  40.128979280106805 -74.970301019417548
+  40.129113095105133 -74.970239871994480
+  40.129224013166791 -74.970114681878158
+  40.129275136421761 -74.970019775766715
+  40.129319254512581 -74.969781281143611
+  40.129346388295261 -74.969520428351402];
+
+
+queryLatLon = LLdata(:,1:2);
+requiredStrings = [];
+mergeMethod = [];
+localRootFolder = [];
+
+
+[queriedElevationsInMeters] = ...
+	fcn_DEMImport_queryElevations(queryLatLon, LatLonLimits, zipPaths,...
+(requiredStrings), (mergeMethod), (localRootFolder), (figNum));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(queriedElevationsInMeters));
+
+% Check variable sizes
+assert(isequal(size(queriedElevationsInMeters),size(LLdata(:,1))));
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
 
 
 %% Test cases start here. These are very simple, usually trivial
@@ -130,35 +208,78 @@ trueAltitude_InMeters = LLAdata(:,3);
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-%% TEST case: Weird case 1
+%% TEST case: show query using PennDOT data
 figNum = 20001;
-titleString = sprintf('TEST case: Weird case 1');
+titleString = sprintf('TEST case: show query using PennDOT data');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
-figure(figNum); clf;
+figure(figNum); close(figNum);
 
-% zipFile = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\LidarMosaics\CountyMosaics\county_DEM_3M\PAMAP_DEM_mosaic_York_3m.zip';
-% 
-% % Call the function
-% [limitsLatLon, limitsFt] = fcn_DEMImport_queryElevations(zipFile, figNum);
-% 
-% sgtitle(titleString, 'Interpreter','none');
-% 
-% 
-% % Check variable types
-% assert(isnumeric(limitsLatLon));
-% assert(isnumeric(limitsFt));
-% 
-% % Check variable sizes
-% assert(isequal(size(limitsLatLon),[1 4]));
-% assert(isequal(size(limitsFt),[1 4]));
-% 
-% % Check variable values
-% assert(isequal(round(limitsLatLon,4),[39.6799   40.2378  -77.1762  -76.2045]));
-% assert(isequal(round(limitsFt/1E6,4),round([0.1300    0.3300    2.1300    2.4000],4)));
-% 
-% % Make sure plot opened up
-% assert(isequal(get(gcf,'Number'),figNum));
+%%%%%%%%%%%%%
+% Load statewide DEM metadata
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
 
+matlabFileObject = matfile(pamap_lidar_limitsFile);
+vars = who(matlabFileObject);
+expectedVariables = {'FtLimits', 'LatLonLimits', 'zipPaths'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
+end
+
+
+%%%%%%%%%%%%%
+% Load PennDOT data
+PennDOT_LLCoordinatesFile = fullfile(pwd,'Data','PennDOT_LLcoordinates.mat');
+
+matlabFileObject = matfile(PennDOT_LLCoordinatesFile);
+vars = who(matlabFileObject);
+expectedVariables = {'PennDOT_LLSegments_cellArray', 'PennDOT_LLSegments_matrix', 'usableTableRows'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, PennDOT_LLCoordinatesFile);
+    end
+end
+
+%%%%%%%%%%%%%
+% Define query. In this case, using first 8 segments of PennDOT points
+% Around 100 points, including NaNs 
+LLdata = PennDOT_LLSegments_matrix(1:108,1:2);
+
+queryLatLon = LLdata(:,1:2);
+requiredStrings = [];
+mergeMethod = [];
+localRootFolder = []; 
+
+
+[queriedElevationsInMeters] = ...
+	fcn_DEMImport_queryElevations(queryLatLon, LatLonLimits, zipPaths,...
+(requiredStrings), (mergeMethod), (localRootFolder), (figNum));
+
+
+% Check variable types
+assert(isnumeric(queriedElevationsInMeters));
+
+% Check variable sizes
+assert(isequal(size(queriedElevationsInMeters),size(LLdata(:,1))));
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
 
 %% TEST case: Test with -2 option to avoid deleting extraction directory
 figNum = 20002;

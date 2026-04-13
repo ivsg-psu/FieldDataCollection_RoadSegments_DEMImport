@@ -136,6 +136,16 @@
 %   % * Wrote the code originally
 % - In fcn_DEMImport_selectEntriesByZipPathStrings
 %   % * Added ability to handle ' or ' string options
+% 
+% 2026_04_13 by Aneesh Batchu, abb6486@psu.edu
+% - In script_test_fcn_DEMImport_queryElevations
+%   % * Added a some DEMO and TEST cases
+% - In fcn_DEMImport_queryElevations
+%   % * Modified the instructions of the inputs
+% - In fcn_DEMImport_querySingleTile
+%   % * Added a helper function fcn_INTERNAL_determineProjectedCRS to
+%   %   % determine projected CRS (coordinate reference system) for a PASDA DEM
+%   %   % tile.
 
 
 % TO-DO:

@@ -221,11 +221,25 @@ queryBoundingBox = [lat_min lat_max lon_min lon_max];
 [overlappingLatLonLimits, overlappingZipPaths, overlappingEntriesFlags] = ...
     fcn_DEMImport_selectEntriesByBoundingBox(queryBoundingBox, matchingLatLonLimits, matchingZipPaths, 99999); %#ok<ASGLU>
 
+if 1==0
+    clear plotFormat
+    plotFormat.Color = [1 1 0];
+    plotFormat.Marker = '.';
+    plotFormat.MarkerSize = 10;
+    plotFormat.LineStyle = 'none';
+    plotFormat.LineWidth = 3;
+
+    figNum = 99999;
+
+    fcn_plotRoad_plotLL((queryLatLon), (plotFormat), (figNum));
+end
+
 %%%%%%%%%%%
 % Step 3: assign DEM tiles to query points
 [matchingTileIndexMatrix, pointTileLogicalMatrix, unmatchedPointFlags, ...
     multipleMatchFlags, numMatchesPerPoint] = ...
     fcn_DEMImport_assignTilesToQueryPoints(queryLatLon, overlappingLatLonLimits, -1); %#ok<ASGLU>
+
 
 %%%%%%%%%%%
 % Step 4: query elevations from matched tiles
