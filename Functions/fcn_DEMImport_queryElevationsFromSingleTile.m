@@ -52,6 +52,12 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_quer
 % - In fcn_DEMImport_queryElevationsFromSingleTile
 %   % * Fixed bug where reference_latitude, etc were not defined inside
 %   %   % plotting function
+% 
+% 2026_04_13 by Aneesh Batchu, abb6486@psu.edu
+% - In fcn_DEMImport_querySingleTile
+%   % * Added a helper function fcn_INTERNAL_determineProjectedCRS to
+%   %   % determine projected CRS (coordinate reference system) for a PASDA DEM
+%   %   % tile.
 
 %% Debugging and Input checks
 
@@ -136,6 +142,29 @@ end
 % Extract limits and unzip results without deleting extracted contents
 [limitsLatLon, ~] = fcn_DEMImport_extractLimitsFromZipFile(localZipFilePath, -2);
 
+if 1==0
+    clear plotFormat
+    plotFormat.Color = [1 1 0];
+    plotFormat.Marker = '.';
+    plotFormat.MarkerSize = 10;
+    plotFormat.LineStyle = 'none';
+    plotFormat.LineWidth = 3;
+
+    figNum = 7789;
+
+    fcn_plotRoad_plotLL((queryLatLon), (plotFormat), (figNum));
+    
+    clear plotFormat
+	plotFormat.Color = [0.5 0.5 1];
+	plotFormat.Marker = '.';
+	plotFormat.MarkerSize = 10;
+	plotFormat.LineStyle = '-';
+	plotFormat.LineWidth = 2;
+
+	fcn_DEMImport_plotLatLonLimits(limitsLatLon, (plotFormat), (figNum));
+
+end
+
 % Build tif filename from local zip name
 [~, zipNameNoExt, ~] = fileparts(localZipFilePath);
 tmpFolder = fullfile(pwd,'TempExtract');
@@ -171,11 +200,16 @@ end
 % disp('Spatial Reference')
 % disp(gtinfo.SpatialRef)
 
-% DEM metadata shows: (Google: EPSG 2271) - from getinfo
-% NAD83 / Pennsylvania North
-% State Plane zone 3701
-% US survey feet
-projCRS = projcrs(2271);  % NAD83 / Pennsylvania North (ftUS)
+% % DEM metadata shows: (Google: EPSG 2271) - from getinfo
+% % NAD83 / Pennsylvania North
+% % State Plane zone 3701
+% % US survey feet
+% projCRS = projcrs(2271);  % NAD83 / Pennsylvania North (ftUS)
+
+% Read GeoTIFF metadata and determine the correct projected CRS
+gtinfo = geotiffinfo(DEM_TIFF_filename);
+projCRS = fcn_INTERNAL_determineProjectedCRS(gtinfo);
+
 
 N = size(queryLatLon,1);
 elevationsInFeet = nan(N,1);
@@ -189,15 +223,23 @@ for ith_queryPoint = 1:N
     % Convert lat/lon to projected DEM coordinates
     [xQueryProj, yQueryProj] = projfwd(projCRS, queryLat, queryLon);
 
-    % Check projected bounds directly against raster reference
-    insideX = xQueryProj >= Rmap.XWorldLimits(1) && xQueryProj <= Rmap.XWorldLimits(2);
-    insideY = yQueryProj >= Rmap.YWorldLimits(1) && yQueryProj <= Rmap.YWorldLimits(2);
+    % % Check projected bounds directly against raster reference
+    % insideX = xQueryProj >= Rmap.XWorldLimits(1) && xQueryProj <= Rmap.XWorldLimits(2);
+    % insideY = yQueryProj >= Rmap.YWorldLimits(1) && yQueryProj <= Rmap.YWorldLimits(2);
+
+    % Convert projected world coordinates to intrinsic raster coordinates
+    [xIntrinsic, yIntrinsic] = worldToIntrinsic(Rmap, xQueryProj, yQueryProj);
+
+    % Check bounds in intrinsic coordinates rather than world limits
+    insideX = xIntrinsic >= Rmap.XIntrinsicLimits(1) && xIntrinsic <= Rmap.XIntrinsicLimits(2);
+    insideY = yIntrinsic >= Rmap.YIntrinsicLimits(1) && yIntrinsic <= Rmap.YIntrinsicLimits(2);
+   
 
     if insideX && insideY
         insideTileFlag(ith_queryPoint) = true;
 
-        % Convert projected world coords to intrinsic raster coords
-        [xIntrinsic, yIntrinsic] = worldToIntrinsic(Rmap, xQueryProj, yQueryProj);
+        % % Convert projected world coords to intrinsic raster coords
+        % [xIntrinsic, yIntrinsic] = worldToIntrinsic(Rmap, xQueryProj, yQueryProj);
 
         % Interpolate directly on DEM matrix
         elevationsInFeet(ith_queryPoint) = interp2(Z, xIntrinsic, yIntrinsic, 'linear');
@@ -345,4 +387,37 @@ Upatch(goodPatch) = DEMpatch_ENU(:,3);
 trackDEM_ENU = gps_object.WGSLLA2ENU( ...
     queryLatLon(:,1), queryLatLon(:,2), elevationsInMeters, ...
     reference_latitude, reference_longitude, reference_altitude);
+end
+
+%% fcn_INTERNAL_determineProjectedCRS
+
+function projCRS = fcn_INTERNAL_determineProjectedCRS(gtinfo)
+% Determines the correct feet-based projected CRS for a PASDA DEM tile.
+%
+% This helper assumes the DEM tiles should be queried in Pennsylvania State
+% Plane US survey feet coordinates, and only determines whether the tile
+% is in the North or South zone.
+
+if ~isfield(gtinfo,'GeoTIFFTags') || ~isfield(gtinfo.GeoTIFFTags,'GeoAsciiParamsTag')
+    error('GeoAsciiParamsTag not found in GeoTIFF metadata.');
+end
+
+geoAsciiText = lower(string(gtinfo.GeoTIFFTags.GeoAsciiParamsTag));
+
+% Check for Pennsylvania North / FIPS 3701
+if contains(geoAsciiText, "pennsylvania_north") && ...
+   contains(geoAsciiText, "3701")
+
+    projCRS = projcrs(2271);   % NAD83 / Pennsylvania North (ftUS)
+
+% Check for Pennsylvania South / FIPS 3702
+elseif contains(geoAsciiText, "pennsylvania_south") && ...
+       contains(geoAsciiText, "3702")
+
+    projCRS = projcrs(2272);   % NAD83 / Pennsylvania South (ftUS)
+
+else
+    error(['Unable to determine Pennsylvania State Plane zone from ' ...
+           'GeoAsciiParamsTag.']);
+end
 end
