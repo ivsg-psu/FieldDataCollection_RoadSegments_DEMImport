@@ -167,6 +167,13 @@
 %   % * Fixed output plotting to avoid connecting dots on queries
 %   % * Removed unnecessary for-loop processing each point 
 %   %   % individually instead of as a vector (VERY slow)
+% 
+% 2026_04_16 by Aneesh Batchu, abb6486@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Added an option input to take queryMode as an input to extrpolate
+%   %   % the queryPoints on the LatLonLimits of the DEM tile. 
+% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Added a test case to demonstrate EXTRAPOLATE query mode (20003)
 
 % TO-DO:
 %

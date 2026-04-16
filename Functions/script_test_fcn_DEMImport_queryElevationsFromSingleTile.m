@@ -10,6 +10,10 @@
 % 2026_04_10 by Sean Brennan, sbrennan@psu.edu
 % - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
 %   % * Cleaned up test scripts
+% 
+% 2026_04_16 by Aneesh Batchu, abb6486@psu.edu
+% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Added a test case to demonstrate EXTRAPOLATE query mode (20003)
 
 %% Set up the workspace
 close all
@@ -32,10 +36,10 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO Case: Query test track LL points for elevation using a single DEM tile
+%% DEMO Case: Query test track LL points for elevation using a single DEM tile using interpolate as queryMode
 
 figNum = 10001;
-titleString = sprintf('DEMO case: Query test track LL points for elevation using a single DEM tile');
+titleString = sprintf('DEMO case: Query test track LL points for elevation using a single DEM tile using interpolate as queryMode');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
@@ -86,8 +90,11 @@ localZipFilePath = zipFile;
 % Query Latitudes and Longitudes (INPUT 2)
 queryLatLon = LLAdata(:,1:2); 
 
+% Query mode (INPUT 3)
+queryMode = 'Interpolate'; 
+
 % Call the function
-[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (figNum));
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), (figNum));
 
 % Assertions
 
@@ -110,6 +117,89 @@ assert(all(abs(difference_InMeters(1:9,:)) < 1.0));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
+
+%% DEMO Case: Query test track LL points for elevation using a single DEM tile using extrapolate as queryMode
+
+figNum = 10001;
+titleString = sprintf('DEMO case: Query test track LL points for elevation using a single DEM tile using extrapolate as queryMode');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+thisURL = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2006/20000000/26001940PAN_dem.zip';
+
+% Zip file name
+fileName = '26001940PAN_dem.zip'; 
+
+% Define a file name and directory to save results
+lasDirectory = fullfile(pwd,'LargeData','zipTestFiles_LAS');
+fcn_DebugTools_makeDirectory(lasDirectory);
+
+zipFile = fullfile(lasDirectory,fileName);
+if ~exist(zipFile,'file')
+	try
+		tic
+		websave(zipFile, thisURL);
+		saveTime = toc;
+		fprintf(1,'\tSaved temp file %s  in %.2f seconds \t', zipFile, saveTime)
+	catch
+		fprintf(1,'Unable to download file: %s \t', tempfile);
+		error('Unable to continue!');
+	end
+end
+
+% LLA Data at the LTI test track (PennState)
+LLAdata = 10^2*[ ...
+    0.408623058681026  -0.778365273044571   3.324661031806739
+    0.408625826820178  -0.778339477029224   3.331887887573579
+    0.408642921349303  -0.778309797211076   3.342002831128628
+    0.408652478825565  -0.778305407027021   3.352010458840883
+    0.408658264449956  -0.778313133224125   3.362028990680672
+    0.408657166946469  -0.778325351582776   3.371905482598103
+    0.408655973552879  -0.778330780725765   3.371955903949584
+    0.408651149227589  -0.778353022705807   3.361830705141319
+    0.408648709961346  -0.778363176280454   3.351862416971704
+    0.408642186189148  -0.778372341008792   3.341821632205509
+    0.408635182471537  -0.778374202210605   3.331882742721607
+    0.408625977026710  -0.778369593792802   3.322871838456281 ];
+
+geoidHeight = egm96geoid(LLAdata(:,1), LLAdata(:,2));
+LLAdata(:,3) = LLAdata(:,3) - geoidHeight; % Convert from ellipsoid height to sea level height
+trueAltitude_InMeters = LLAdata(:,3) ;
+
+% Full local zip file path (INPUT 1)
+localZipFilePath = zipFile; 
+
+% Query Latitudes and Longitudes (INPUT 2)
+queryLatLon = LLAdata(:,1:2); 
+
+% Query mode (INPUT 3)
+queryMode = 'Extrapolate'; 
+
+% Call the function
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), (figNum));
+
+% Assertions
+
+% Reference 
+[limitsLatLon_ref, ~] = fcn_DEMImport_extractLimitsFromZipFile(localZipFilePath, -2);
+
+% Size checks
+assert(isequal(size(elevationsInMeters), [size(queryLatLon,1), 1]));
+assert(isequal(size(insideTileFlag), [size(queryLatLon,1), 1]));
+assert(isequal(size(limitsLatLon), size(limitsLatLon_ref)));
+
+% Limits check
+assert(max(abs(limitsLatLon(:)-limitsLatLon_ref(:))) < 1e-12, 'limitsLatLon does not match extracted reference limits.');
+
+% Query points check
+assert(all(insideTileFlag),'Expected all test-track query points to be inside the chosen DEM tile.');
+
+difference_InMeters = elevationsInMeters - trueAltitude_InMeters;
+assert(all(abs(difference_InMeters(1:9,:)) < 1.0));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
 
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -149,7 +239,10 @@ queryLatLon = repmat(meanLatLon,Nqueries,1) + variationLL*randn(Nqueries,2);
 
 % ONLY FOR TESTING FAIL CASE --> queryLatLon = [queryLatLon; meanLatLon+[1 1]; meanLatLon-[1 1]];
 
-[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (figNum));
+% Query mode 
+queryMode = 'Interpolate';
+
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), (figNum));
 
 % Size checks
 assert(isequal(size(elevationsInMeters), [size(queryLatLon,1), 1]));
@@ -169,10 +262,10 @@ assert(all(insideTileFlag),'Expected all test-track query points to be inside th
 assert(isequal(get(gcf,'Number'),figNum));
 
 
-%% TEST Case: Query tile with points near edges (bug case)
+%% TEST Case: Query tile with points near edges using INTERPOLATE (bug case)
 
 figNum = 20002;
-titleString = sprintf('TEST Case: Query tile with points near edges (bug case)');
+titleString = sprintf('TEST Case: Query tile with points near edges using INTERPOLATE (bug case)');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
@@ -214,8 +307,11 @@ localZipFilePath = zipFile;
 % Query Latitudes and Longitudes (INPUT 2)
 queryLatLon = LLAdata(:,1:2); 
 
+% Query mode (INPUT 3)
+queryMode = 'Interpolate';
+
 % Call the function
-[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (figNum));
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), (figNum));
 
 % Assertions
 
@@ -231,7 +327,90 @@ assert(isequal(size(limitsLatLon), size(limitsLatLon_ref)));
 assert(max(abs(limitsLatLon(:)-limitsLatLon_ref(:))) < 1e-12, 'limitsLatLon does not match extracted reference limits.');
 
 % Query points check
+assert(all(isnan(elevationsInMeters)),'Expected altitudes of the queryPoints to be NaN');
 assert(all(insideTileFlag),'Expected all test-track query points to be inside the chosen DEM tile.');
+
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%% TEST Case: Query tile with points near edges using EXTRAPOLATE
+
+figNum = 20003;
+titleString = sprintf('TEST Case: Query tile with points near edges using EXTRAPOLATE');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+thisURL = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2006/20000000/26001940PAN_dem.zip';
+
+% Zip file name
+fileName = '26001940PAN_dem.zip'; 
+
+% Define a file name and directory to save results
+lasDirectory = fullfile(pwd,'LargeData','zipTestFiles_LAS');
+fcn_DebugTools_makeDirectory(lasDirectory);
+
+zipFile = fullfile(lasDirectory,fileName);
+if ~exist(zipFile,'file')
+	try
+		tic
+		websave(zipFile, thisURL);
+		saveTime = toc;
+		fprintf(1,'\tSaved temp file %s  in %.2f seconds \t', zipFile, saveTime)
+	catch
+		fprintf(1,'Unable to download file: %s \t', tempfile);
+		error('Unable to continue!');
+	end
+end
+
+thisTileLimitsLatLon = [40.852772999999999  40.880246999999997 -77.853061999999994 -77.816872000000004];
+
+% LLA Data at the LTI test track (PennState)
+LLAdata = [ ...
+    thisTileLimitsLatLon(1,1) thisTileLimitsLatLon(1,3);
+    thisTileLimitsLatLon(1,1) thisTileLimitsLatLon(1,4);
+    thisTileLimitsLatLon(1,2) thisTileLimitsLatLon(1,3);
+    thisTileLimitsLatLon(1,2) thisTileLimitsLatLon(1,4);
+    ];
+
+% % Reference 
+% [limitsLatLon_ref, ~] = fcn_DEMImport_extractLimitsFromZipFile(zipFile, -2);
+% 
+% % LLA Data 
+% LLAdata = [ ...
+%     limitsLatLon_ref(1,1) limitsLatLon_ref(1,3);
+%     limitsLatLon_ref(1,1) limitsLatLon_ref(1,4);
+%     limitsLatLon_ref(1,2) limitsLatLon_ref(1,3);
+%     limitsLatLon_ref(1,2) limitsLatLon_ref(1,4);
+%     ];
+
+% Full local zip file path (INPUT 1)
+localZipFilePath = zipFile; 
+
+% Query Latitudes and Longitudes (INPUT 2)
+queryLatLon = LLAdata(:,1:2); 
+
+% Query mode (INPUT 3)
+queryMode = 'Extrapolate';
+
+% Call the function
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), (figNum));
+
+% Assertions
+
+% Reference 
+[limitsLatLon_ref, ~] = fcn_DEMImport_extractLimitsFromZipFile(localZipFilePath, -2);
+
+% Size checks
+assert(isequal(size(elevationsInMeters), [size(queryLatLon,1), 1]));
+assert(isequal(size(insideTileFlag), [size(queryLatLon,1), 1]));
+assert(isequal(size(limitsLatLon), size(limitsLatLon_ref)));
+
+% Limits check
+assert(max(abs(limitsLatLon(:)-limitsLatLon_ref(:))) < 1e-12, 'limitsLatLon does not match extracted reference limits.');
+
+% Query points check
+assert(all(~isnan(elevationsInMeters)),'Expected all query points to be extrapolated');
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -305,8 +484,11 @@ localZipFilePath = zipFile;
 % Query Latitudes and Longitudes (INPUT 2)
 queryLatLon = LLAdata(:,1:2); 
 
+% Query mode (INPUT 3)
+queryMode = 'interpolate';
+
 % Call the function
-[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, ([]));
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), ([]));
 
 % Assertions
 
@@ -384,8 +566,11 @@ localZipFilePath = zipFile;
 % Query Latitudes and Longitudes (INPUT 2)
 queryLatLon = LLAdata(:,1:2); 
 
+% Query mode (INPUT 3)
+queryMode = 'interpolate';
+
 % Call the function
-[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (-1));
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), (-1));
 
 % Assertions
 
@@ -465,6 +650,9 @@ localZipFilePath = zipFile;
 % Query Latitudes and Longitudes (INPUT 2)
 queryLatLon = LLAdata(:,1:2); 
 
+% Query mode (INPUT 3)
+queryMode = 'interpolate';
+
 Niterations = 1;
 
 % Do calculation without pre-calculation
@@ -472,7 +660,7 @@ tic;
 for ith_test = 1:Niterations
 
 	% Call the function
-	[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, ([]));
+	[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), ([]));
 
 end
 slow_method = toc;
@@ -482,7 +670,7 @@ tic;
 for ith_test = 1:Niterations
 
 	% Call the function
-	[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (-1));
+	[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), (-1));
 
 end
 fast_method = toc;

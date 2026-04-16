@@ -1,9 +1,14 @@
-function [elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, varargin)
+function [elevationsInMeters, insideTileFlag, limitsLatLon, trueTileCornerLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, varargin)
 %% fcn_DEMImport_querySingleTile
 %
 % This function uses a single LOCAL DEM tile to interpolate elevations at
 % the input query lat/lon points. This function assumes the zip file
 % already exists locally.
+% 
+% NOTE: If the function extrapolates the queryPoints to find the
+% elevations, the insideTileFlag would still show that the points are
+% outside. However, the elevationInMeters would have the extrapolated
+% altitude. 
 %
 % FORMAT:
 %
@@ -14,6 +19,21 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_quer
 %   localZipFile: full local path to one DEM zip file
 % 
 %   queryLatLon: N x 2 numeric array [lat lon]
+% 
+%   (OPTIONAL INPUTS)
+% 
+%   queryMode: scalar numeric mode flag
+%       'interpolate' = interpolation mode (default)
+%           Interpolate only points inside the raster bounds.
+%           Outside points remain NaN.
+%
+%       'extrapolate' = extrapolation mode
+%           Interpolate inside points and extrapolate outside points.
+%           insideTileFlag still reports true raster inclusion.
+% 
+%      figNum: a figure number to plot results. If set to -1,
+%      skips any input checking or debugging, no figures will be generated,
+%      and sets up code to maximize speed.
 %
 % OUTPUTS:
 % 
@@ -22,12 +42,14 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_quer
 %   insideTileFlag: Boolean matrix (N x 1) logical matrix
 % 
 %   limitsLatLon: 1 x 4 matrix [lat_min lat_max lon_min lon_max]
+%   This is an axis-aligned geographic bounding box of the tile.
+%   It is NOT guaranteed that the four synthetic bbox corners
+%   [lat_min/max, lon_min/max] lie exactly on the raster boundary.
+%
+%   trueTileCornerLatLon: 1 x 4 matrix [lat_min lat_max lon_min lon_max]
+%   True geographic corner locations of the raster tile, computed from the
+%   raster intrinsic corners through the projected CRS.
 % 
-%   (OPTIONAL INPUTS)
-% 
-%      figNum: a figure number to plot results. If set to -1,
-%      skips any input checking or debugging, no figures will be generated,
-%      and sets up code to maximize speed.
 % 
 % DEPENDENCIES:
 %
@@ -68,6 +90,11 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_quer
 %   % * Fixed output plotting to avoid connecting dots on queries
 %   % * Removed unnecessary for-loop processing each point 
 %   %   % individually instead of as a vector (VERY slow)
+% 
+% 2026_04_16 by Aneesh Batchu, abb6486@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Added an option input to take queryMode as an input to extrpolate
+%   %   % the queryPoints on the LatLonLimits of the DEM tile. 
 
 % TO-DO:
 %
@@ -82,7 +109,7 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_quer
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 3; % The largest Number of argument inputs to the function
+MAX_NARGIN = 4; % The largest Number of argument inputs to the function
 flag_max_speed = 0; % The default. This runs code with all error checking
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; % Flag to plot the results for debugging
@@ -135,6 +162,17 @@ if 0==flag_max_speed
     end
 end
 
+
+% Does the user want to specify queryMode?
+queryMode = 'interpolate';
+if nargin >= 3
+    temp = varargin{1};
+    if ~isempty(temp)
+        queryMode = temp;
+    end
+end
+
+
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin)
@@ -180,7 +218,6 @@ if 1==0
 	plotFormat.LineWidth = 2;
 
 	fcn_DEMImport_plotLatLonLimits(limitsLatLon, (plotFormat), (figNum));
-
 end
 
 % Build tif filename from local zip name
@@ -244,14 +281,51 @@ insideTileFlag = false(N,1);
 [xCoordsIntrinsic, yCoordsIntrinsic] = worldToIntrinsic(Rmap, xQueriesProj, yQueriesProj);
 
 % Check bounds in intrinsic coordinates rather than world limits
-insideXCoords = xCoordsIntrinsic >= Rmap.XIntrinsicLimits(1) & xCoordsIntrinsic <= Rmap.XIntrinsicLimits(2);
-insideYCoords = yCoordsIntrinsic >= Rmap.YIntrinsicLimits(1) & yCoordsIntrinsic <= Rmap.YIntrinsicLimits(2);
+insideXCoords = xCoordsIntrinsic >= Rmap.XIntrinsicLimits(1) & ...
+                xCoordsIntrinsic <= Rmap.XIntrinsicLimits(2);
+insideYCoords = yCoordsIntrinsic >= Rmap.YIntrinsicLimits(1) & ...
+                yCoordsIntrinsic <= Rmap.YIntrinsicLimits(2);
 bothInside = insideXCoords & insideYCoords;
 insideTileFlag(bothInside) = true;
 
-% Interpolate directly on DEM matrix
-elevationsInFeet(bothInside) = interp2(Z, xCoordsIntrinsic(bothInside), yCoordsIntrinsic(bothInside), 'linear');
-elevationsInMeters(bothInside) = elevationsInFeet(bothInside) / 3.2808398950131;
+% % Interpolate directly on DEM matrix
+% elevationsInFeet(bothInside) = interp2(Z, xCoordsIntrinsic(bothInside), yCoordsIntrinsic(bothInside), 'linear');
+% elevationsInMeters(bothInside) = elevationsInFeet(bothInside) / 3.2808398950131;
+
+% Query elevations
+switch lower(queryMode)
+    case 'interpolate'
+        % Only Interpolate mode (default): interpolate only inside points
+        elevationsInFeet(bothInside) = interp2(Z, xCoordsIntrinsic(bothInside), yCoordsIntrinsic(bothInside), 'linear');
+        elevationsInMeters(bothInside) = elevationsInFeet(bothInside) / 3.2808398950131;
+
+    case 'extrapolate'
+        % Extrapolation mode: interpolate inside, extrapolate outside
+        % Create an interpolant object
+        interpolantObject = griddedInterpolant({1:size(Z,1), 1:size(Z,2)}, Z, 'linear', 'linear');
+        elevationsInFeet = interpolantObject(yCoordsIntrinsic, xCoordsIntrinsic);
+        elevationsInMeters = elevationsInFeet / 3.2808398950131;
+
+    otherwise
+        error('Unsupported queryMode. Use interpolate or extrapolate');
+end
+
+
+% Determine true raster tile corners in lat/lon -- Can delete it or move it inside the conditional statement below
+xIntrinsicCorners = [Rmap.XIntrinsicLimits(1);
+    Rmap.XIntrinsicLimits(2);
+    Rmap.XIntrinsicLimits(1);
+    Rmap.XIntrinsicLimits(2)];
+yIntrinsicCorners = [Rmap.YIntrinsicLimits(1);
+    Rmap.YIntrinsicLimits(1);
+    Rmap.YIntrinsicLimits(2);
+    Rmap.YIntrinsicLimits(2)];
+
+[xWorldCorners, yWorldCorners] = intrinsicToWorld(Rmap, xIntrinsicCorners, yIntrinsicCorners);
+[latCorners, lonCorners] = projinv(projCRS, xWorldCorners, yWorldCorners);
+% tileCornerLatLon = [latCorners, lonCorners];
+trueTileCornerLatLon = [min(latCorners), max(latCorners), min(lonCorners), max(lonCorners)];
+
 
 % Make sure all are inside
 if ~all(bothInside,'all')
@@ -260,12 +334,78 @@ if ~all(bothInside,'all')
         ith_queryPoint = notInside(ith_notInside);
         fprintf(1,'Query point outside DEM bounds: \n');
         fprintf(1,'\tLLA bounds: %.8f, %.8f %.8f %.8f with query Lat, Lon values: %.8f, %.8f\n', ...
-            limitsLatLon(1,1), limitsLatLon(1,2), limitsLatLon(1,3),limitsLatLon(1,4),...
+            trueTileCornerLatLon(1,1), trueTileCornerLatLon(1,2), trueTileCornerLatLon(1,3),trueTileCornerLatLon(1,4),...
             queryLatLon(ith_queryPoint,1), queryLatLon(ith_queryPoint,2));
         fprintf(1,'\tInt bounds: %.8f, %.8f %.8f %.8f with query Xin, Yin values: %.8f, %.8f\n', ...
             Rmap.XIntrinsicLimits(1), Rmap.XIntrinsicLimits(2), Rmap.YIntrinsicLimits(1), Rmap.YIntrinsicLimits(2),...
             xCoordsIntrinsic(ith_queryPoint,1), yCoordsIntrinsic(ith_queryPoint,1));
+        % fprintf(1,'\tTrue tile corners [lat lon]:\n');
+        % disp(trueTileCornerLatLon);
     end
+end
+
+% Debugging
+if 1==0
+    figure(978698)
+    clf;
+    hold on;
+    grid on;
+    axis equal;
+
+
+    % Valid raster boundary
+    xBox = [Rmap.XIntrinsicLimits(1) Rmap.XIntrinsicLimits(2) Rmap.XIntrinsicLimits(2) Rmap.XIntrinsicLimits(1) Rmap.XIntrinsicLimits(1)];
+    yBox = [Rmap.YIntrinsicLimits(1) Rmap.YIntrinsicLimits(1) Rmap.YIntrinsicLimits(2) Rmap.YIntrinsicLimits(2) Rmap.YIntrinsicLimits(1)];
+
+    % Raster boundary
+    plot(xBox, yBox, 'k-', 'LineWidth', 2, 'DisplayName','True DEM bounds');
+
+    % Inside points in green
+    plot(xCoordsIntrinsic(bothInside), yCoordsIntrinsic(bothInside), 'go', ...
+        'MarkerSize', 10, 'DisplayName','Inside');
+
+    % Outside points in red
+    plot(xCoordsIntrinsic(~bothInside), yCoordsIntrinsic(~bothInside), 'r.', ...
+        'MarkerSize', 10, 'DisplayName','Outside');
+
+    xlabel('Intrinsic X');
+    ylabel('Intrinsic Y');
+    title('Inside/outside query points in intrinsic raster coordinates');
+    legend('Location', 'best');
+
+    xlim([Rmap.XIntrinsicLimits(1)-150, Rmap.XIntrinsicLimits(2)+150]);
+    ylim([Rmap.YIntrinsicLimits(1)-150, Rmap.YIntrinsicLimits(2)+150]);
+
+
+    fig_Num = 2435;
+    figure(fig_Num)
+    clf;
+
+    clear plotFormat
+    plotFormat.Color = [0.5 0.5 1];
+    plotFormat.Marker = '.';
+    plotFormat.MarkerSize = 10;
+    plotFormat.LineStyle = '-';
+	plotFormat.LineWidth = 2;
+    plotFormat.DisplayName = 'Bounding Box';
+
+	fcn_DEMImport_plotLatLonLimits(limitsLatLon, (plotFormat), (fig_Num));
+    
+
+	plotFormat.Color = [1 0 0];
+    plotFormat.LineStyle = '--';
+    plotFormat.DisplayName = 'True Tile Boundary';
+	fcn_DEMImport_plotLatLonLimits(trueTileCornerLatLon, (plotFormat), (fig_Num));
+    
+    clear plotFormat
+	plotFormat.Color = [0 1 0];
+	plotFormat.Marker = '.';
+	plotFormat.MarkerSize = 10;
+	plotFormat.LineStyle = 'none';
+    plotFormat.DisplayName = 'Query Points';
+
+    fcn_plotRoad_plotLL(queryLatLon, (plotFormat), (fig_Num))
+    legend('Location', 'best');
 end
 
 
