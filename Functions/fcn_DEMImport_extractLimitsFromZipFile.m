@@ -194,7 +194,8 @@ if filesize_bytes==0
 else
 	try
 		unzip(zipFile, tmpFolder);
-	catch
+    catch
+        warning('backtrace','on');
 		warning('Invalid zip file found (skipping): %s\n',zipFile);
 		return;
 

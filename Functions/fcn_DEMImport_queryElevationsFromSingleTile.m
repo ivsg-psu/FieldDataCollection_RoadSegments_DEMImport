@@ -58,6 +58,24 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_quer
 %   % * Added a helper function fcn_INTERNAL_determineProjectedCRS to
 %   %   % determine projected CRS (coordinate reference system) for a PASDA DEM
 %   %   % tile.
+% 
+% 2026_04_16 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Improved function naming to separate out CRS calculations more
+%   %   % clearly
+%   % * Added fcn_INTERNAL_determineProjectedCRSfromFileName to catch cases
+%   %   % where CRS is corrupted (see test case 1)
+%   % * Fixed output plotting to avoid connecting dots on queries
+%   % * Removed unnecessary for-loop processing each point 
+%   %   % individually instead of as a vector (VERY slow)
+
+% TO-DO:
+%
+% 2026_04_16 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * The code is reporting that some queries, which are inside the
+%   %   % bounding box, are not actually valid. This is a bug. See PennDOT
+%   %   % demo case 10004 in script_test_fcn_DEMImport_queryElevations
 
 %% Debugging and Input checks
 
@@ -207,49 +225,83 @@ end
 % projCRS = projcrs(2271);  % NAD83 / Pennsylvania North (ftUS)
 
 % Read GeoTIFF metadata and determine the correct projected CRS
-gtinfo = geotiffinfo(DEM_TIFF_filename);
-projCRS = fcn_INTERNAL_determineProjectedCRS(gtinfo);
-
+try
+    gtinfo = geotiffinfo(DEM_TIFF_filename);
+    projCRS = fcn_INTERNAL_determineProjectedCRSfromGeoTiffInfo(gtinfo);
+catch
+    projCRS = fcn_INTERNAL_determineProjectedCRSfromFileName(DEM_TIFF_filename);
+end
 
 N = size(queryLatLon,1);
 elevationsInFeet = nan(N,1);
 elevationsInMeters = nan(N,1);
 insideTileFlag = false(N,1);
 
-for ith_queryPoint = 1:N
-    queryLat = queryLatLon(ith_queryPoint,1);
-    queryLon = queryLatLon(ith_queryPoint,2);
+% Convert lat/lon to projected DEM coordinates
+[xQueriesProj, yQueriesProj] = projfwd(projCRS, queryLatLon(:,1), queryLatLon(:,2));
 
-    % Convert lat/lon to projected DEM coordinates
-    [xQueryProj, yQueryProj] = projfwd(projCRS, queryLat, queryLon);
+% Convert projected world coordinates to intrinsic raster coordinates
+[xCoordsIntrinsic, yCoordsIntrinsic] = worldToIntrinsic(Rmap, xQueriesProj, yQueriesProj);
 
-    % % Check projected bounds directly against raster reference
-    % insideX = xQueryProj >= Rmap.XWorldLimits(1) && xQueryProj <= Rmap.XWorldLimits(2);
-    % insideY = yQueryProj >= Rmap.YWorldLimits(1) && yQueryProj <= Rmap.YWorldLimits(2);
+% Check bounds in intrinsic coordinates rather than world limits
+insideXCoords = xCoordsIntrinsic >= Rmap.XIntrinsicLimits(1) & xCoordsIntrinsic <= Rmap.XIntrinsicLimits(2);
+insideYCoords = yCoordsIntrinsic >= Rmap.YIntrinsicLimits(1) & yCoordsIntrinsic <= Rmap.YIntrinsicLimits(2);
+bothInside = insideXCoords & insideYCoords;
+insideTileFlag(bothInside) = true;
 
-    % Convert projected world coordinates to intrinsic raster coordinates
-    [xIntrinsic, yIntrinsic] = worldToIntrinsic(Rmap, xQueryProj, yQueryProj);
+% Interpolate directly on DEM matrix
+elevationsInFeet(bothInside) = interp2(Z, xCoordsIntrinsic(bothInside), yCoordsIntrinsic(bothInside), 'linear');
+elevationsInMeters(bothInside) = elevationsInFeet(bothInside) / 3.2808398950131;
 
-    % Check bounds in intrinsic coordinates rather than world limits
-    insideX = xIntrinsic >= Rmap.XIntrinsicLimits(1) && xIntrinsic <= Rmap.XIntrinsicLimits(2);
-    insideY = yIntrinsic >= Rmap.YIntrinsicLimits(1) && yIntrinsic <= Rmap.YIntrinsicLimits(2);
-   
-
-    if insideX && insideY
-        insideTileFlag(ith_queryPoint) = true;
-
-        % % Convert projected world coords to intrinsic raster coords
-        % [xIntrinsic, yIntrinsic] = worldToIntrinsic(Rmap, xQueryProj, yQueryProj);
-
-        % Interpolate directly on DEM matrix
-        elevationsInFeet(ith_queryPoint) = interp2(Z, xIntrinsic, yIntrinsic, 'linear');
-        elevationsInMeters(ith_queryPoint) = elevationsInFeet(ith_queryPoint) / 3.2808398950131;
-    else
-        if 1==0
-            fprintf(1,'Query point outside DEM bounds: %.8f, %.8f\n', queryLat, queryLon);
-        end
+% Make sure all are inside
+if ~all(bothInside,'all')
+    notInside = find(~bothInside);
+    for ith_notInside = 1:length(notInside)
+        ith_queryPoint = notInside(ith_notInside);
+        fprintf(1,'Query point outside DEM bounds: \n');
+        fprintf(1,'\tLLA bounds: %.8f, %.8f %.8f %.8f with query Lat, Lon values: %.8f, %.8f\n', ...
+            limitsLatLon(1,1), limitsLatLon(1,2), limitsLatLon(1,3),limitsLatLon(1,4),...
+            queryLatLon(ith_queryPoint,1), queryLatLon(ith_queryPoint,2));
+        fprintf(1,'\tInt bounds: %.8f, %.8f %.8f %.8f with query Xin, Yin values: %.8f, %.8f\n', ...
+            Rmap.XIntrinsicLimits(1), Rmap.XIntrinsicLimits(2), Rmap.YIntrinsicLimits(1), Rmap.YIntrinsicLimits(2),...
+            xCoordsIntrinsic(ith_queryPoint,1), yCoordsIntrinsic(ith_queryPoint,1));
     end
 end
+
+
+% OLD METHOD - SLOW
+% for ith_queryPoint = 1:N
+% 
+%     % Convert lat/lon to projected DEM coordinates
+%     % [xQueryProj, yQueryProj] = projfwd(projCRS, queryLatLon(ith_queryPoint,1), queryLatLon(ith_queryPoint,2));
+% 
+%     % % Check projected bounds directly against raster reference
+%     % insideX = xQueryProj >= Rmap.XWorldLimits(1) && xQueryProj <= Rmap.XWorldLimits(2);
+%     % insideY = yQueryProj >= Rmap.YWorldLimits(1) && yQueryProj <= Rmap.YWorldLimits(2);
+% 
+%     % Convert projected world coordinates to intrinsic raster coordinates
+%     % [xIntrinsic, yIntrinsic] = worldToIntrinsic(Rmap, xQueryProj, yQueryProj);
+% 
+%     % Check bounds in intrinsic coordinates rather than world limits
+%     % insideX = xIntrinsic >= Rmap.XIntrinsicLimits(1) && xIntrinsic <= Rmap.XIntrinsicLimits(2);
+%     % insideY = yIntrinsic >= Rmap.YIntrinsicLimits(1) && yIntrinsic <= Rmap.YIntrinsicLimits(2);
+% 
+% 
+%     if insideX && insideY
+%         % insideTileFlag(ith_queryPoint) = true;
+% 
+%         % % Convert projected world coords to intrinsic raster coords
+%         % [xIntrinsic, yIntrinsic] = worldToIntrinsic(Rmap, xQueryProj, yQueryProj);
+% 
+%         % Interpolate directly on DEM matrix
+%         elevationsInFeet(ith_queryPoint) = interp2(Z, xIntrinsic, yIntrinsic, 'linear');
+%         elevationsInMeters(ith_queryPoint) = elevationsInFeet(ith_queryPoint) / 3.2808398950131;
+%     else
+%         if 1==0
+%             fprintf(1,'Query point outside DEM bounds: %.8f, %.8f\n', queryLatLon(ith_queryPoint,1), queryLatLon(ith_queryPoint,2));
+%         end
+%     end
+% end
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   _____       _
@@ -278,7 +330,7 @@ if flag_do_plots
     surf(Epatch, Npatch, Upatch, Upatch, 'EdgeColor', 'none');
     hold on;
     plot3(trackDEM_ENU(:,1), trackDEM_ENU(:,2), trackDEM_ENU(:,3), ...
-        'g.-', 'LineWidth', 2, 'MarkerSize', 18);
+        'g.', 'LineWidth', 2, 'MarkerSize', 18);
 
     % axis equal;
     xlabel('East [m]');
@@ -389,9 +441,9 @@ trackDEM_ENU = gps_object.WGSLLA2ENU( ...
     reference_latitude, reference_longitude, reference_altitude);
 end
 
-%% fcn_INTERNAL_determineProjectedCRS
+%% fcn_INTERNAL_determineProjectedCRSfromGeoTiffInfo
 
-function projCRS = fcn_INTERNAL_determineProjectedCRS(gtinfo)
+function projCRS = fcn_INTERNAL_determineProjectedCRSfromGeoTiffInfo(gtinfo)
 % Determines the correct feet-based projected CRS for a PASDA DEM tile.
 %
 % This helper assumes the DEM tiles should be queried in Pennsylvania State
@@ -420,4 +472,28 @@ else
     error(['Unable to determine Pennsylvania State Plane zone from ' ...
            'GeoAsciiParamsTag.']);
 end
+end % Ends fcn_INTERNAL_determineProjectedCRSfromGeoTiffInfo
+
+%% fcn_INTERNAL_determineProjectedCRSfromGeoTiffInfo
+
+function projCRS = fcn_INTERNAL_determineProjectedCRSfromFileName(fileName)
+% Guesses the correct feet-based projected CRS for a PASDA DEM tile.
+%
+% This helper assumes the DEM tiles should be queried in Pennsylvania State
+% Plane US survey feet coordinates, and only determines whether the tile
+% is in the North or South zone.
+
+% Check for Pennsylvania North / FIPS 3701
+if contains(fileName, "PAN_dem")
+
+    projCRS = projcrs(2271);   % NAD83 / Pennsylvania North (ftUS)
+
+% Check for Pennsylvania South / FIPS 3702
+elseif contains(fileName, "PAS_dem")
+
+    projCRS = projcrs(2272);   % NAD83 / Pennsylvania South (ftUS)
+
+else
+    error('Unable to determine Pennsylvania State Plane zone from file name: %s.',fileName);
 end
+end % Ends fcn_INTERNAL_determineProjectedCRSfromFileName

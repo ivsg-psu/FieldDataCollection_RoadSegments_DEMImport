@@ -10,6 +10,10 @@
 % 2026_04_13 by Aneesh Batchu, abb6486@psu.edu
 % - In script_test_fcn_DEMImport_queryElevations
 %   % * Added a some DEMO and TEST cases
+%
+% 2026_04_15 by Sean Brennan, sbrennan@psu.edu
+%  - In script_test_fcn_DEMImport_queryElevations
+%    % * Added a test case to specify localRootFolder
 
 % TO-DO:
 %
@@ -118,9 +122,169 @@ figHandles = get(groot, 'Children');
 assert(~any(figHandles==figNum));
 
 
+%% DEMO case: show query using test track data, using local zip folders
+figNum = 10002;
+titleString = sprintf('DEMO case: show query using test track data, using local zip folders');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); close(figNum);
+
+%%%%%%%%%%%%%
+% Load statewide DEM metadata
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+matlabFileObject = matfile(pamap_lidar_limitsFile);
+vars = who(matlabFileObject);
+expectedVariables = {'FtLimits', 'LatLonLimits', 'zipPaths'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
+end
+
+%%%%%%%%%%%%%
+% Define query. In this case, using LTI test-track points
+LLAdata = 10^2*[ ...
+    0.408623058681026  -0.778365273044571   3.324661031806739
+    0.408625826820178  -0.778339477029224   3.331887887573579
+    0.408642921349303  -0.778309797211076   3.342002831128628
+    0.408652478825565  -0.778305407027021   3.352010458840883
+    0.408658264449956  -0.778313133224125   3.362028990680672
+    0.408657166946469  -0.778325351582776   3.371905482598103
+    0.408655973552879  -0.778330780725765   3.371955903949584
+    0.408651149227589  -0.778353022705807   3.361830705141319
+    0.408648709961346  -0.778363176280454   3.351862416971704
+    0.408642186189148  -0.778372341008792   3.341821632205509
+    0.408635182471537  -0.778374202210605   3.331882742721607
+    0.408625977026710  -0.778369593792802   3.322871838456281 ];
+
+queryLatLon = LLAdata(:,1:2);
+requiredStrings = [];
+mergeMethod = [];
+
+% This folder is where the PASDA zip files will be stored locally
+localRootFolder = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\';
+
+
+
+[queriedElevationsInMeters] = ...
+	fcn_DEMImport_queryElevations(queryLatLon, LatLonLimits, zipPaths,...
+(requiredStrings), (mergeMethod), (localRootFolder), (figNum));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+
+% Geoid-corrected truth values for comparison
+geoidHeight = egm96geoid(LLAdata(:,1), LLAdata(:,2));
+LLAdata(:,3) = LLAdata(:,3) - geoidHeight;
+trueAltitude_InMeters = LLAdata(:,3);
+
+% Difference in meters
+difference_InMeters = queriedElevationsInMeters - trueAltitude_InMeters;
+
+
+% Check variable types
+assert(isnumeric(queriedElevationsInMeters));
+
+% Check variable sizes
+assert(isequal(size(queriedElevationsInMeters),size(trueAltitude_InMeters)));
+
+% Check variable values
+assert(all(abs(difference_InMeters(1:9,:)) < 1.0));
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
+
+%% DEMO case: show query using test track data, using local zip folders and multiple returns
+figNum = 10003;
+titleString = sprintf('DEMO case: show query using test track data, using local zip folders and multiple returns');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); close(figNum);
+
+%%%%%%%%%%%%%
+% Load statewide DEM metadata
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+matlabFileObject = matfile(pamap_lidar_limitsFile);
+vars = who(matlabFileObject);
+expectedVariables = {'FtLimits', 'LatLonLimits', 'zipPaths'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
+end
+
+%%%%%%%%%%%%%
+% Define query. In this case, using LTI test-track points
+LLAdata = 10^2*[ ...
+    0.408623058681026  -0.778365273044571   3.324661031806739
+    0.408625826820178  -0.778339477029224   3.331887887573579
+    0.408642921349303  -0.778309797211076   3.342002831128628
+    0.408652478825565  -0.778305407027021   3.352010458840883
+    0.408658264449956  -0.778313133224125   3.362028990680672
+    0.408657166946469  -0.778325351582776   3.371905482598103
+    0.408655973552879  -0.778330780725765   3.371955903949584
+    0.408651149227589  -0.778353022705807   3.361830705141319
+    0.408648709961346  -0.778363176280454   3.351862416971704
+    0.408642186189148  -0.778372341008792   3.341821632205509
+    0.408635182471537  -0.778374202210605   3.331882742721607
+    0.408625977026710  -0.778369593792802   3.322871838456281 ];
+
+queryLatLon = LLAdata(:,1:2);
+requiredStrings = {'\DEM\', '\North\ or \South\'};
+% requiredStrings = {'DEM'};
+mergeMethod = 'mean';
+
+% This folder is where the PASDA zip files will be stored locally
+localRootFolder = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\';
+
+[queriedElevationsInMeters] = ...
+	fcn_DEMImport_queryElevations(queryLatLon, LatLonLimits, zipPaths,...
+(requiredStrings), (mergeMethod), (localRootFolder), (figNum));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+
+% Geoid-corrected truth values for comparison
+geoidHeight = egm96geoid(LLAdata(:,1), LLAdata(:,2));
+LLAdata(:,3) = LLAdata(:,3) - geoidHeight;
+trueAltitude_InMeters = LLAdata(:,3);
+
+% Difference in meters
+difference_InMeters = queriedElevationsInMeters - trueAltitude_InMeters;
+
+
+% Check variable types
+assert(isnumeric(queriedElevationsInMeters));
+
+% Check variable sizes
+assert(isequal(size(queriedElevationsInMeters),size(trueAltitude_InMeters)));
+
+% Check variable values
+assert(all(abs(difference_InMeters(1:9,:)) < 1.0));
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
 
 %% DEMO case: show query using PennDOT data
-figNum = 10001;
+figNum = 10004;
 titleString = sprintf('DEMO case: show query using PennDOT data');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); close(figNum);
@@ -148,27 +312,27 @@ end
 
 %%%%%%%%%%%%%
 % Define query. In this case, using PennDOT points
-LLdata = [40.128726992872387 -74.969118497838778
-  40.128519123466461 -74.969373007626771
-  40.128478669903480 -74.969467478055307
-  40.128443998934095 -74.969654533348603
-  40.128478237186151 -74.969894470666034
-  40.128550595727056 -74.970091084932264
-  40.128641957993828 -74.970189463032298
-  40.128757993170723 -74.970277553625692
-  40.128869025828763 -74.970305514587224
-  40.128979280106805 -74.970301019417548
-  40.129113095105133 -74.970239871994480
-  40.129224013166791 -74.970114681878158
-  40.129275136421761 -74.970019775766715
-  40.129319254512581 -74.969781281143611
-  40.129346388295261 -74.969520428351402];
+
+flag_loadDataFilesWhenPossible = 1;
+
+% Load the PennDOT LL data
+PreviousDataFileName = 'PennDOT_LLcoordinates';
+PreviouseDataFilePath = fullfile(pwd,'Data',cat(2,PreviousDataFileName,'.mat'));
+if flag_loadDataFilesWhenPossible && exist(PreviouseDataFilePath,'file')
+	load(PreviouseDataFilePath,'PennDOT_LLSegments_cellArray');
+else
+	error('Unable to load file: \n\t%s\nNeed to obtain this from the PennDOTSHP repo!',PreviouseDataFilePath);
+end
+allPennDOTPoints = vertcat(PennDOT_LLSegments_cellArray{:});
 
 
-queryLatLon = LLdata(:,1:2);
-requiredStrings = [];
-mergeMethod = [];
-localRootFolder = [];
+queryLatLon = allPennDOTPoints(:,1:2);
+requiredStrings = {'\DEM\', '\North\ or \South\'};
+% requiredStrings = {'DEM'};
+mergeMethod = 'mean';
+
+% This folder is where the PASDA zip files will be stored locally
+localRootFolder = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\';
 
 
 [queriedElevationsInMeters] = ...
@@ -341,6 +505,88 @@ assert(isequal(round(limitsFt/1E6,4),round([0.2000    0.2100    1.7900    1.8000
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
+
+
+%% TEST case: Test with points on edge of tile (throws bugs)
+figNum = 20003;
+titleString = sprintf('TEST case: Test with points on edge of tile (throws bugs)');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); close(figNum);
+
+%%%%%%%%%%%%%
+% Load statewide DEM metadata
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+matlabFileObject = matfile(pamap_lidar_limitsFile);
+vars = who(matlabFileObject);
+expectedVariables = {'FtLimits', 'LatLonLimits', 'zipPaths'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
+end
+
+%%%%%%%%%%%%%
+% Define query. In this case, using LTI test-track points
+LLAdata = 10^2*[ ...
+    0.408623058681026  -0.778365273044571   3.324661031806739
+    0.408625826820178  -0.778339477029224   3.331887887573579
+    0.408642921349303  -0.778309797211076   3.342002831128628
+    0.408652478825565  -0.778305407027021   3.352010458840883
+    0.408658264449956  -0.778313133224125   3.362028990680672
+    0.408657166946469  -0.778325351582776   3.371905482598103
+    0.408655973552879  -0.778330780725765   3.371955903949584
+    0.408651149227589  -0.778353022705807   3.361830705141319
+    0.408648709961346  -0.778363176280454   3.351862416971704
+    0.408642186189148  -0.778372341008792   3.341821632205509
+    0.408635182471537  -0.778374202210605   3.331882742721607
+    0.408625977026710  -0.778369593792802   3.322871838456281 ];
+
+queryLatLon = LLAdata(:,1:2);
+requiredStrings = [];
+mergeMethod = [];
+
+% This folder is where the PASDA zip files will be stored locally
+localRootFolder = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\';
+
+
+
+[queriedElevationsInMeters] = ...
+	fcn_DEMImport_queryElevations(queryLatLon, LatLonLimits, zipPaths,...
+(requiredStrings), (mergeMethod), (localRootFolder), (figNum));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+
+% Geoid-corrected truth values for comparison
+geoidHeight = egm96geoid(LLAdata(:,1), LLAdata(:,2));
+LLAdata(:,3) = LLAdata(:,3) - geoidHeight;
+trueAltitude_InMeters = LLAdata(:,3);
+
+% Difference in meters
+difference_InMeters = queriedElevationsInMeters - trueAltitude_InMeters;
+
+
+% Check variable types
+assert(isnumeric(queriedElevationsInMeters));
+
+% Check variable sizes
+assert(isequal(size(queriedElevationsInMeters),size(trueAltitude_InMeters)));
+
+% Check variable values
+assert(all(abs(difference_InMeters(1:9,:)) < 1.0));
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==figNum));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

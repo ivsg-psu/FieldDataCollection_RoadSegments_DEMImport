@@ -76,10 +76,14 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 % 2026_04_13 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_queryElevations
 %   % * Wrote this code originally
+%
 % 2026_04_13 by Aneesh Batchu, abb6486@psu.edu
 % - In fcn_DEMImport_queryElevations
 %   % * Modified the instructions of the inputs
-
+%
+% 2026_04_15 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevations
+%   % * Fixed bug where input arguments were not being passed in correctly
 
 %% Debugging and Input checks
 
@@ -155,7 +159,7 @@ end
 % Does user want to specify mergeMethod
 mergeMethod = 'first';
 if (0==flag_max_speed) && (4 <= nargin)
-    temp = varargin{1};
+    temp = varargin{2};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         mergeMethod = temp;
     end
@@ -165,7 +169,7 @@ end
 % Does user want to specify localRootFolder
 localRootFolder = fullfile(pwd,'LargeData');
 if (0==flag_max_speed) && (4 <= nargin)
-    temp = varargin{2};
+    temp = varargin{3};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         localRootFolder = temp;
     end
@@ -241,13 +245,46 @@ end
     fcn_DEMImport_assignTilesToQueryPoints(queryLatLon, overlappingLatLonLimits, -1); %#ok<ASGLU>
 
 
-%%%%%%%%%%%
-% Step 4: query elevations from matched tiles
-[mergedElevations, rawElevationMatrix, queryStatus] = ...
-    fcn_DEMImport_queryElevationsFromMatchedTiles( ...
-        queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, ...
-        mergeMethod, localRootFolder, figNum);
+% For debugging
+if 1==1
+    temp = unmatchedPointFlags;
+    clear plotFormat
+    plotFormat.Color = [1 1 1];
+    plotFormat.Marker = '.';
+    plotFormat.MarkerSize = 10;
+    plotFormat.LineStyle = 'none';
+    plotFormat.LineWidth = 3;
 
+    figNum = 99999;
+
+    fcn_plotRoad_plotLL((queryLatLon(temp,1:2)), (plotFormat), (figNum));
+end
+
+if 1==0
+    % Process ALL tiles, even if 0 matches were found
+
+    %%%%%%%%%%%
+    % Step 4: query elevations from matched tiles
+    [mergedElevations, rawElevationMatrix, queryStatus] = ...
+        fcn_DEMImport_queryElevationsFromMatchedTiles( ...
+        queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, ...
+        mergeMethod, localRootFolder, -1);
+else
+    % Process ONLY tiles where matches were found
+
+    flagTileWasUsed = any(pointTileLogicalMatrix,1)';
+    newIndex = cumsum(flagTileWasUsed).*flagTileWasUsed;
+    newMatchingTileIndexMatrix = matchingTileIndexMatrix;
+    newMatchingTileIndexMatrix(~isnan(newMatchingTileIndexMatrix)) = newIndex(matchingTileIndexMatrix(~isnan(matchingTileIndexMatrix)));
+    newOverlappingZipPaths = overlappingZipPaths(flagTileWasUsed);
+
+    %%%%%%%%%%%
+    % Step 4: query elevations from matched tiles
+    [mergedElevations, rawElevationMatrix, queryStatus] = ...
+        fcn_DEMImport_queryElevationsFromMatchedTiles( ...
+        queryLatLon, newMatchingTileIndexMatrix, newOverlappingZipPaths, ...
+        mergeMethod, localRootFolder, -1);
+end
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   _____       _
@@ -264,14 +301,17 @@ if flag_do_plots
     figure(figNum);
     close(figNum);
 
-    fprintf(1,'\nMerged elevations:\n');
-    disp(mergedElevations);
+    % For debugging
+    if 1==0
+        fprintf(1,'\nMerged elevations:\n');
+        disp(mergedElevations);
 
-    fprintf(1,'\nRaw elevation matrix:\n');
-    disp(rawElevationMatrix);
+        fprintf(1,'\nRaw elevation matrix:\n');
+        disp(rawElevationMatrix);
 
-    fprintf(1,'\nNumber of valid elevations per point:\n');
-    disp(queryStatus.numValidElevationsPerPoint);
+        fprintf(1,'\nNumber of valid elevations per point:\n');
+        disp(queryStatus.numValidElevationsPerPoint);
+    end
 
 end
 

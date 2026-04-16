@@ -1,5 +1,6 @@
 function [mergedElevations, rawElevationMatrix, queryStatus] = ...
-    fcn_DEMImport_queryElevationsFromMatchedTiles(queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, varargin)
+    fcn_DEMImport_queryElevationsFromMatchedTiles(...
+    queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, varargin)
 %% fcn_DEMImport_queryElevationsFromMatchedTiles 
 % 
 % Queries elevations for a set of latitude/longitude points using the DEM
@@ -13,7 +14,8 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 %
 % FORMAT: 
 %       [mergedElevations, rawElevationMatrix, queryStatus] = ...
-%           fcn_DEMImport_queryElevationsFromMatchedTiles(queryLatLon, matchingTileIndexMatrix, overlappingZipPaths,..
+%           fcn_DEMImport_queryElevationsFromMatchedTiles(...
+%               queryLatLon, matchingTileIndexMatrix, overlappingZipPaths,..
 %               (mergeMethod), (localRootFolder), (figNum))
 % INPUTS:
 %   queryLatLon:  N x 2 matrix of query latitude/longitude points
@@ -88,7 +90,11 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 % 2026_04_09 by Aneesh Batchu, abb6486@psu.edu
 % - In fcn_DEMImport_queryElevationsFromMatchedTiles
 %   % * Wrote this code originally
-
+%
+% 2026_04_16 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Fixed bug where input arguments are not imported if user specifies
+%   %   % fast mode and where input argument count number was wrong
 
 % TO-DO:
 %
@@ -156,7 +162,7 @@ end
 
 % Does user want to specify mergeMethod
 mergeMethod = 'first';
-if (0==flag_max_speed) && (4 <= nargin)
+if (4 <= nargin)
     temp = varargin{1};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         mergeMethod = temp;
@@ -166,7 +172,7 @@ end
 
 % Does user want to specify localRootFolder
 localRootFolder = fullfile(pwd,'LargeData');
-if (0==flag_max_speed) && (4 <= nargin)
+if (5 <= nargin)
     temp = varargin{2};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         localRootFolder = temp;
@@ -174,6 +180,7 @@ if (0==flag_max_speed) && (4 <= nargin)
 end
 
 % Does user want to show the plots?
+figNum = [];
 flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
@@ -212,13 +219,23 @@ localZipFilesUsed = cell(M_tiles,1);
 
 % Loop over tile indices, not over query points.
 % This avoids repeatedly opening the same DEM tile for many points.
+NfoundTotal = 0;
 for tileIdx = 1:M_tiles
+    thisZipPathEntry = overlappingZipPaths{tileIdx};
+
+    if flag_do_plots
+        fprintf(1,'Processing file: %s',thisZipPathEntry);
+    end
 
     % Find all occurrences of this tile index inside the N x K match matrix.
     % pointRows tells us which query points belong to this tile.
     % pointCols tells us which slot in rawElevationMatrix should receive
     % the returned elevation.
     [pointRows, pointCols] = find(matchingTileIndexMatrix == tileIdx);
+    
+    NfoundTotal = NfoundTotal + length(pointRows);
+    fprintf(1,' %.0f found here, percent done overall: %.2f\n',length(pointRows), NfoundTotal*100/N_queryPoints);
+    
 
     % If no query point uses this tile, skip it
     if isempty(pointRows)
@@ -226,7 +243,6 @@ for tileIdx = 1:M_tiles
     end
 
     % Resolve/download the local zip file for this tile if needed
-    thisZipPathEntry = overlappingZipPaths{tileIdx};
     localZipFile = fcn_DEMImport_ensureLocalZipFromPASDAPath(thisZipPathEntry, localRootFolder);
     localZipFilesUsed{tileIdx} = localZipFile;
 

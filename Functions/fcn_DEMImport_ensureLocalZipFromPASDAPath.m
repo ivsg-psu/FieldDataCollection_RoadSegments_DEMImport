@@ -46,6 +46,18 @@ function localZipFile = fcn_DEMImport_ensureLocalZipFromPASDAPath(zipPathEntry, 
 % 2026_04_09 by Aneesh Batchu, abb6486@psu.edu
 % - In fcn_DEMImport_ensureLocalZipFromPASDAPath
 %   % * Wrote this code originally
+%
+% 2026_04_15 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Fixed bug where localRootFolder was not being appended correctly to
+%   %   % file path
+
+% TO-DO:
+%
+% 2026_04_13 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_ensureLocalZipFromPASDAPath
+%   (add items here)
+
 
 %% Debugging and Input checks
 
@@ -150,8 +162,9 @@ end
 relativePASDAPath = token;
 
 % Extract only the zip filename for local storage
-[~, zipFileName, zipExt] = fileparts(relativePASDAPath);
-localZipFile = fullfile(localRootFolder, [zipFileName zipExt]);
+[zipFilePath, zipFileName, zipExt] = fileparts(relativePASDAPath);
+fullPath = fullfile(localRootFolder,zipFilePath);
+localZipFile = fullfile(fullPath, [zipFileName zipExt]);
 
 % If the file is already present locally, return immediately
 if exist(localZipFile, 'file')

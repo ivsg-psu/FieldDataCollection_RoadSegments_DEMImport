@@ -130,13 +130,111 @@ assert(isequal(get(gcf,'Number'),figNum));
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-%% TEST case:
+%% TEST case: Multiple images exist in the file and their sizes are different
 figNum = 20001;
-titleString = sprintf('TEST case: ');
+titleString = sprintf('TEST case: Multiple images exist in the file and their sizes are different');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
+localZipFilePath = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2008\10000000\17002190PAN_dem.zip';
 
+% Reference 
+[limitsLatLon_ref, ~] = fcn_DEMImport_extractLimitsFromZipFile(localZipFilePath, -2);
+meanLatLon = [mean(limitsLatLon_ref(1,1:2)) mean(limitsLatLon_ref(1,3:4))];
+
+Nqueries = 100;
+variationLL = 0.001;
+rng(1); % For repeatability
+queryLatLon = repmat(meanLatLon,Nqueries,1) + variationLL*randn(Nqueries,2);
+
+% ONLY FOR TESTING FAIL CASE --> queryLatLon = [queryLatLon; meanLatLon+[1 1]; meanLatLon-[1 1]];
+
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (figNum));
+
+% Size checks
+assert(isequal(size(elevationsInMeters), [size(queryLatLon,1), 1]));
+assert(isequal(size(insideTileFlag), [size(queryLatLon,1), 1]));
+assert(isequal(size(limitsLatLon), size(limitsLatLon_ref)));
+
+% Limits check
+assert(max(abs(limitsLatLon(:)-limitsLatLon_ref(:))) < 1e-12, 'limitsLatLon does not match extracted reference limits.');
+
+% Query points check
+assert(all(insideTileFlag),'Expected all test-track query points to be inside the chosen DEM tile.');
+
+% difference_InMeters = elevationsInMeters - 129.6037;
+% assert(all(abs(difference_InMeters) < 1.0,'all'));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+
+%% TEST Case: Query tile with points near edges (bug case)
+
+figNum = 20002;
+titleString = sprintf('TEST Case: Query tile with points near edges (bug case)');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+thisURL = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2006/20000000/26001940PAN_dem.zip';
+
+% Zip file name
+fileName = '26001940PAN_dem.zip'; 
+
+% Define a file name and directory to save results
+lasDirectory = fullfile(pwd,'LargeData','zipTestFiles_LAS');
+fcn_DebugTools_makeDirectory(lasDirectory);
+
+zipFile = fullfile(lasDirectory,fileName);
+if ~exist(zipFile,'file')
+	try
+		tic
+		websave(zipFile, thisURL);
+		saveTime = toc;
+		fprintf(1,'\tSaved temp file %s  in %.2f seconds \t', zipFile, saveTime)
+	catch
+		fprintf(1,'Unable to download file: %s \t', tempfile);
+		error('Unable to continue!');
+	end
+end
+
+thisTileLimitsLatLon = [40.852772999999999  40.880246999999997 -77.853061999999994 -77.816872000000004];
+
+% LLA Data at the LTI test track (PennState)
+LLAdata = [ ...
+    thisTileLimitsLatLon(1,1) thisTileLimitsLatLon(1,3);
+    thisTileLimitsLatLon(1,1) thisTileLimitsLatLon(1,4);
+    thisTileLimitsLatLon(1,2) thisTileLimitsLatLon(1,3);
+    thisTileLimitsLatLon(1,2) thisTileLimitsLatLon(1,4);
+    ];
+
+% Full local zip file path (INPUT 1)
+localZipFilePath = zipFile; 
+
+% Query Latitudes and Longitudes (INPUT 2)
+queryLatLon = LLAdata(:,1:2); 
+
+% Call the function
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (figNum));
+
+% Assertions
+
+% Reference 
+[limitsLatLon_ref, ~] = fcn_DEMImport_extractLimitsFromZipFile(localZipFilePath, -2);
+
+% Size checks
+assert(isequal(size(elevationsInMeters), [size(queryLatLon,1), 1]));
+assert(isequal(size(insideTileFlag), [size(queryLatLon,1), 1]));
+assert(isequal(size(limitsLatLon), size(limitsLatLon_ref)));
+
+% Limits check
+assert(max(abs(limitsLatLon(:)-limitsLatLon_ref(:))) < 1e-12, 'limitsLatLon does not match extracted reference limits.');
+
+% Query points check
+assert(all(insideTileFlag),'Expected all test-track query points to be inside the chosen DEM tile.');
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

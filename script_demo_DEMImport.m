@@ -146,7 +146,27 @@
 %   % * Added a helper function fcn_INTERNAL_determineProjectedCRS to
 %   %   % determine projected CRS (coordinate reference system) for a PASDA DEM
 %   %   % tile.
-
+%
+% 2026_04_15 by Sean Brennan, sbrennan@psu.edu
+%  - In script_test_fcn_DEMImport_queryElevationsFromMatchedTiles
+%    % * Added a test case to specify localRootFolder
+%  - In script_test_fcn_DEMImport_queryElevations
+%    % * Added a test case to specify localRootFolder
+% - In fcn_DEMImport_queryElevations
+%   % * Fixed bug where input arguments were not being passed in correctly
+%
+% 2026_04_16 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Fixed bug where input arguments are not imported if user specifies
+%   %   % fast mode and where input argument count number was wrong
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Improved function naming to separate out CRS calculations more
+%   %   % clearly
+%   % * Added fcn_INTERNAL_determineProjectedCRSfromFileName to catch cases
+%   %   % where CRS is corrupted (see test case 1)
+%   % * Fixed output plotting to avoid connecting dots on queries
+%   % * Removed unnecessary for-loop processing each point 
+%   %   % individually instead of as a vector (VERY slow)
 
 % TO-DO:
 %
@@ -171,6 +191,23 @@
 %   % * Need to allow user to input margin of search, with a good
 %   %   % suggestion. Margin should be at least he size of the DEM box width in
 %   %   % the PASDA data
+%
+% 2026_04_15 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * If user selects 'first' as method, it still seems to loop through
+%   %   % ALL the DEM files, which can be VERY slow. Needs to only use first
+%   %   % valid DEM and then stop looping
+%
+% 2026_04_16 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * The code is reporting that some queries, which are inside the
+%   %   % bounding box, are not actually valid. This is a bug. See PennDOT
+%   %   % demo case 10004 in script_test_fcn_DEMImport_queryElevations
+% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Created "TEST Case: Query tile with points near edges (bug case)"
+%   %   % This is case 20002.
+%   %   % This illustrates the error above using the tile for the test
+%   %   % track. Need to fix this.
 
 %% Make sure we are running out of root directory
 st = dbstack; 
