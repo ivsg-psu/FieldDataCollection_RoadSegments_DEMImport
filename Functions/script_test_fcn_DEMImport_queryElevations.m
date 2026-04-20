@@ -506,8 +506,32 @@ NewDataFilePath = fullfile(pwd,'LargeData',cat(2,NewDataFileName,'.mat'));
 save(NewDataFilePath,'PennDOT_LLAsubSegments_cellArray', 'PennDOT_LLAsubSegments_matrix','PennDOT_LLASegments_cellArray', 'PennDOT_LLASegments_matrix');
 
 
-%% Plot gradients
+%% Demo: Plot gradients
 
+%%%%%%%%%%%%
+% Load segments
+PreviousDataFileName = 'PennDOT_LLcoordinates';
+PreviouseDataFilePath = fullfile(pwd,'Data',cat(2,PreviousDataFileName,'.mat'));
+
+matlabFileObject = matfile(PreviouseDataFilePath);
+vars = who(matlabFileObject);
+expectedVariables = {'PennDOT_LLSegments_cellArray', 'PennDOT_LLSegments_matrix', 'usableTableRows'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
+end
+
+
+%%%%%%%%%%%%
+% Load subsegments
 NewDataFileName = 'PennDOT_LLAsubSegment_coordinates';
 NewDataFilePath = fullfile(pwd,'LargeData',cat(2,NewDataFileName,'.mat'));
 
@@ -538,7 +562,9 @@ for ith_cell = 1:Nsegments
         figure(debug_fig_num); clf;
 
         subplot(2,2,1);
-        geoplot(LLIdata(:,1),LLIdata(:,2),'LineWidth',3);
+        originalPennDOTData = PennDOT_LLSegments_cellArray{ith_cell};
+
+        geoplot(originalPennDOTData(:,1),originalPennDOTData(:,2),'LineWidth',3);
         geobasemap('satellite');
 
         subplot(2,2,2);
