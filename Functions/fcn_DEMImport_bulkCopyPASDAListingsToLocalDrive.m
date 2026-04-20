@@ -46,7 +46,10 @@ function fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResult, 
 % 2026_04_11 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
 %   % * Moved fcn_INTERNAL_timeStringFromSeconds into DebugTools
-
+%
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
+%   % * Updated call to fcn_DEMImport_importZipFromURL for new format
 
 % TO-DO:
 %
@@ -194,13 +197,19 @@ for ith_listing = 1:Nlistings
 	bytesToCopy = listingsToDownload{ith_listing,4};
 	if bytesToCopy>largeFileLimit
 		fprintf(1,'Operation %.0d of %.0d, Size: %.3f MB is too large, skipping %s\n', ith_listing, Nlistings, bytesToCopy/1E6, URLtoImport);
-	else
-		fprintf(1,'Operation %.0d of %.0d, Size: %.3f MB is being copied...',ith_listing, Nlistings, bytesToCopy/1E6);
-		% Call the function
+    else
+        if 0==bytesToCopy
+    		fprintf(1,'Operation %.0d of %.0d, folder or zero-size file creation...',ith_listing, Nlistings);
+        else
+    		fprintf(1,'Operation %.0d of %.0d, Size: %.3f MB is being copied...',ith_listing, Nlistings, bytesToCopy/1E6);
+        end
+
+        % Call the function
 		estimatedSeconds = bytesToCopy/estimatedBytesPerSecond;
+        expectedBytes = bytesToCopy;
 		PASDA_URL_Prefix = [];
-		rootOfLargeDataPath = [];
-		saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (PASDA_URL_Prefix), (rootOfLargeDataPath), (-1));
+		rootOfLargeDataPath = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
+		saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (expectedBytes), (PASDA_URL_Prefix), (rootOfLargeDataPath), (-1));
 
 		% If the file is large, update copy estimate
 		if bytesToCopy>1E6 && saveTime>0

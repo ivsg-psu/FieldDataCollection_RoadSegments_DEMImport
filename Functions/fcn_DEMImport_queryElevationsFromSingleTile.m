@@ -25,11 +25,15 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon, trueTileCornerLatLon
 %   queryMode: scalar numeric mode flag
 %       'interpolate' = interpolation mode (default)
 %           Interpolate only points inside the raster bounds.
-%           Outside points remain NaN.
+%           Outside points remain NaN. insideTileFlag reports true raster
+%           inclusion, not LLA inclusion. Note: near edges of tiles, raster
+%           inclusion will NOT cover LLA inclusion so 'extrapolate' option
+%           is needed in these cases.
 %
 %       'extrapolate' = extrapolation mode
 %           Interpolate inside points and extrapolate outside points.
-%           insideTileFlag still reports true raster inclusion.
+%           insideTileFlag reports inclusion as defined by LLA limits, not
+%           raster limits.
 % 
 %      figNum: a figure number to plot results. If set to -1,
 %      skips any input checking or debugging, no figures will be generated,
@@ -95,6 +99,12 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon, trueTileCornerLatLon
 % - In fcn_DEMImport_queryElevationsFromSingleTile
 %   % * Added an option input to take queryMode as an input to extrpolate
 %   %   % the queryPoints on the LatLonLimits of the DEM tile. 
+% 
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Separated inclusion validity checking for interpolate versus
+%   % extrapolate settings, so that warnings are not constantly thrown for
+%   % extrapolate cases.
 
 % TO-DO:
 %
@@ -280,13 +290,7 @@ insideTileFlag = false(N,1);
 % Convert projected world coordinates to intrinsic raster coordinates
 [xCoordsIntrinsic, yCoordsIntrinsic] = worldToIntrinsic(Rmap, xQueriesProj, yQueriesProj);
 
-% Check bounds in intrinsic coordinates rather than world limits
-insideXCoords = xCoordsIntrinsic >= Rmap.XIntrinsicLimits(1) & ...
-                xCoordsIntrinsic <= Rmap.XIntrinsicLimits(2);
-insideYCoords = yCoordsIntrinsic >= Rmap.YIntrinsicLimits(1) & ...
-                yCoordsIntrinsic <= Rmap.YIntrinsicLimits(2);
-bothInside = insideXCoords & insideYCoords;
-insideTileFlag(bothInside) = true;
+
 
 % % Interpolate directly on DEM matrix
 % elevationsInFeet(bothInside) = interp2(Z, xCoordsIntrinsic(bothInside), yCoordsIntrinsic(bothInside), 'linear');
@@ -295,11 +299,27 @@ insideTileFlag(bothInside) = true;
 % Query elevations
 switch lower(queryMode)
     case 'interpolate'
+        % Check bounds in intrinsic coordinates rather than world limits
+        insideXCoords = xCoordsIntrinsic >= Rmap.XIntrinsicLimits(1) & ...
+            xCoordsIntrinsic <= Rmap.XIntrinsicLimits(2);
+        insideYCoords = yCoordsIntrinsic >= Rmap.YIntrinsicLimits(1) & ...
+            yCoordsIntrinsic <= Rmap.YIntrinsicLimits(2);
+        bothInside = insideXCoords & insideYCoords;
+        insideTileFlag(bothInside) = true;
+
         % Only Interpolate mode (default): interpolate only inside points
         elevationsInFeet(bothInside) = interp2(Z, xCoordsIntrinsic(bothInside), yCoordsIntrinsic(bothInside), 'linear');
         elevationsInMeters(bothInside) = elevationsInFeet(bothInside) / 3.2808398950131;
 
     case 'extrapolate'
+        % Check bounds in intrinsic coordinates rather than world limits
+        insideLatCoords = queryLatLon(:,1) >= limitsLatLon(1,1) & ...
+            queryLatLon(:,1) <= limitsLatLon(1,2);
+        insideLonCoords = queryLatLon(:,2) >= limitsLatLon(1,3) & ...
+            queryLatLon(:,2) <= limitsLatLon(1,4);
+        bothInside = insideLatCoords & insideLonCoords;
+        insideTileFlag(bothInside) = true;
+
         % Extrapolation mode: interpolate inside, extrapolate outside
         % Create an interpolant object
         interpolantObject = griddedInterpolant({1:size(Z,1), 1:size(Z,2)}, Z, 'linear', 'linear');
@@ -318,7 +338,7 @@ xIntrinsicCorners = [Rmap.XIntrinsicLimits(1);
     Rmap.XIntrinsicLimits(2)];
 yIntrinsicCorners = [Rmap.YIntrinsicLimits(1);
     Rmap.YIntrinsicLimits(1);
-    Rmap.YIntrinsicLimits(2);
+    Rmap.YIntrinsicLimits(2); 
     Rmap.YIntrinsicLimits(2)];
 
 [xWorldCorners, yWorldCorners] = intrinsicToWorld(Rmap, xIntrinsicCorners, yIntrinsicCorners);

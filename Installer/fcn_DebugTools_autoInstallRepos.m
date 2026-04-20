@@ -310,7 +310,7 @@ temp = which('fcn_DebugTools_findLatestGitHubRelease');
 
 if isempty(temp)
     % Install DebugTools using internal function and trusted repo
-    dependency_name      = 'DebugTools_v2026_03_24';
+    dependency_name      = 'DebugTools_v2026_04_18';
     dependency_subfolders = {'Functions','Data'};
     dependency_url        = cat(2,'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/',...
         dependency_name,'.zip');

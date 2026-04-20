@@ -173,7 +173,40 @@
 %   % * Added an option input to take queryMode as an input to extrpolate
 %   %   % the queryPoints on the LatLonLimits of the DEM tile. 
 % - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
-%   % * Added a test case to demonstrate EXTRAPOLATE query mode (20003)
+%   % * Added a test case to demonstrate EXTRAPOLATE query mode (20003).
+%   %   %Fixes the following bugs:
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * The code is reporting that some queries, which are inside the
+%   %   % bounding box, are not actually valid. This is a bug. See PennDOT
+%   %   % demo case 10004 in script_test_fcn_DEMImport_queryElevations
+% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Created "TEST Case: Query tile with points near edges (bug case)"
+%   %   % This is case 20002.
+%   %   % This illustrates the error above using the tile for the test
+%   %   % track. Need to fix this.
+% 
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Separated inclusion validity checking for interpolate versus
+%   % extrapolate settings, so that warnings are not constantly thrown for
+%   % extrapolate cases.
+% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Fixed minor error in assertion so script would complete correctly
+% - In fcn_DEMImport_extractLimitsFromZipFile
+%   % * Added special case handling where zip file may be corrupt
+% - In script_test_fcn_DEMImport_extractLimitsFromZipFile
+%   % * Added test case for DEM imports where fields are missing. See Test
+%   %   % case 20003
+% - In script_test_fcn_DEMImport_importZipFromURL
+%   % * Added expectedBytes input
+% - In fcn_DEMImport_importZipFromURL
+%   % * Added expectedBytes input
+%   % * Added skip of files if they exist and have expected bytes
+% - In fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive
+%   % * Updated call to fcn_DEMImport_importZipFromURL for new format
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Fixed queryMode in call to
+%   %   % fcn_DEMImport_queryElevationsFromSingleTile 
 
 % TO-DO:
 %
@@ -204,17 +237,8 @@
 %   % * If user selects 'first' as method, it still seems to loop through
 %   %   % ALL the DEM files, which can be VERY slow. Needs to only use first
 %   %   % valid DEM and then stop looping
-%
-% 2026_04_16 by Sean Brennan, sbrennan@psu.edu
-% - In fcn_DEMImport_queryElevationsFromSingleTile
-%   % * The code is reporting that some queries, which are inside the
-%   %   % bounding box, are not actually valid. This is a bug. See PennDOT
-%   %   % demo case 10004 in script_test_fcn_DEMImport_queryElevations
-% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
-%   % * Created "TEST Case: Query tile with points near edges (bug case)"
-%   %   % This is case 20002.
-%   %   % This illustrates the error above using the tile for the test
-%   %   % track. Need to fix this.
+
+
 
 %% Make sure we are running out of root directory
 st = dbstack; 
@@ -345,14 +369,30 @@ end
 disp('Welcome to the demo code for the DEMImport library!')
 
 %% DEMO case: scrape PASDA directory (takes about 30 minutes)
+% This pulls everything from 'https://www.pasda.psu.edu/download/'
+
 figNum = 10001;
 titleString = sprintf('DEMO case: scrape PASDA directory (takes about 30 minutes)');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 % figure(figNum); clf;
 
 if 1==0
-	% Call the function
-	fcn_DEMImport_scrapePASDA(-1)
+    if ~exist('scrapeDirectoryResultPASDA','var')
+    	saveFileName = fullfile(pwd,'Data','scrapeDirectoryResultPASDA.mat');
+    	if exist(saveFileName,'file')
+    		load(saveFileName,'scrapeDirectoryResultPASDA');
+    	else
+    		warning('backtrace','on')
+            warning(['Unable to find load file for directory scrape: %s. ' ...
+                'Need to rebuild this - this takes a LONG time (an hour). User must MANUALLY uncomment to proceed.'],saveFileName);
+            if 1==0
+                % Call the function to build the data file scrapeDirectoryResultPASDA.mat
+            	fcn_DEMImport_scrapePASDA(-1)
+            else
+                error('Need to uncomment to proceed!');
+            end
+    	end
+    end
 end
 
 %% DEMO case: load pamap (9 TB - takes about 4 days)
@@ -404,22 +444,47 @@ titleString = sprintf('DEMO case: process ALL data scraped under pamap_lidar fol
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
-fcn_plotRoad_plotLL([],[],figNum);
-set(gca,'MapCenter',[41.2545 -78.0122], 'ZoomLevel', 6.875); % Entire state
-
 % Change this folder to match the one on the external drive
-rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\';
+rootPathName = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\';
 
-% Flag is set to 1 to FORCE all files to be scanned, ignoring existing load
-% files
-flagIgnoreLoadFiles = 1;
+finalLimitsFileName = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
 
-warning('This function takes 8 HOURS to run and requires an external attached drive with roughly 10 TB of PASDA data downloaded (see previous steps). You must manually edit this code to FORCE the operation to occur.')
-if 1==0
-	% Call the function
-	[LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+if exist(finalLimitsFileName,'file')
+    load(finalLimitsFileName, 'LatLonLimits', 'zipPaths', 'FtLimits');
+
+    % If file gets corrupted, it should be the same as this 
+    if 1==0
+        sourceLimitsFileName = fullfile(rootPathName,'latlonLimitsThisBranch.mat');
+        load(sourceLimitsFileName, 'LatLonLimits', 'zipPaths', 'FtLimits');
+        LatLonLimits(contains(zipPaths,'2006\30000000\32001260PAS_dem.zip'),:)
+        LatLonLimits(contains(zipPaths,'2006\30000000\32001260PAS_dem.zip'),1:2)= [40.156390500000001  40.184612999999999];
+        LatLonLimits(contains(zipPaths,'2006\30000000\32001260PAS_dem.zip'),:)
+        save(finalLimitsFileName, 'LatLonLimits', 'zipPaths', 'FtLimits');
+    end
+
+else
+
+    fcn_plotRoad_plotLL([],[],figNum);
+    set(gca,'MapCenter',[41.2545 -78.0122], 'ZoomLevel', 6.875); % Entire state
+
+
+    % Flag is set to 1 to FORCE all files to be scanned, ignoring existing load
+    % files
+    flagIgnoreLoadFiles = 1;
+
+    warning('This function takes roughly 8 HOURS to run and requires an external attached drive with roughly 10 TB of PASDA data downloaded (see previous steps). You must manually edit this code to FORCE the operation to occur.')
+    if 1==1
+    	% Call the function
+    	[LatLonLimits, zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+        % sourceLimitsFileName = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\';
+
+        % FIX BUG IN PASDA data!
+        LatLonLimits(contains(zipPaths,'2006\30000000\32001260PAS_dem.zip'),1:2)= [40.156390500000001  40.184612999999999];
+
+        % Save results
+        save(finalLimitsFileName, 'LatLonLimits', 'zipPaths', 'FtLimits');
+    end
 end
-
 %% DEMO: show how to pull out zip locations
 figNum = 10005;
 titleString = sprintf('DEMO case: show how to pull out zip locations');

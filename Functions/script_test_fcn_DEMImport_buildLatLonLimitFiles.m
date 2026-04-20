@@ -6,6 +6,11 @@
 % 2026_03_21 by Sean Brennan, sbrennan@psu.edu
 % - In script_test_fcn_DEMImport_buildLatLonLimitFiles
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
+%
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_fcn_DEMImport_buildLatLonLimitFiles
+%   % * Cleaned up test script.
+%   % * Modified main demo case to work on Dr. B's office computer.
 
 % TO-DO:
 %
@@ -43,6 +48,8 @@ figure(figNum); close(figNum);
 fcn_plotRoad_plotLL([],[],figNum);
 set(gca,'MapCenter',[41.2545 -78.0122], 'ZoomLevel', 6.875); % Entire state
 
+%%%%%%%%%%
+% LOCATIONS on Dr Bs laptop
 % rootPathName = fullfile(pwd,'LargeData','download');
 % rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000\';
 % rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2006\30000000';
@@ -50,43 +57,51 @@ set(gca,'MapCenter',[41.2545 -78.0122], 'ZoomLevel', 6.875); % Entire state
 % rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2007\30000000\';
 % rootPathName = 'C:\Users\snb10\Desktop\GitHubRepos\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\LAS\';
 
-rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
+%%%%%%%%%%
+% LOCATIONS on Dr Bs home office
 % rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\BL\South\2007\10000000\';
+% rootPathName = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
 
-flagIgnoreLoadFiles = false;
+%%%%%%%%%%
+% LOCATIONS on Dr Bs Reber office
+% rootPathName = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
+rootPathName = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North';
+% rootPathName = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2008\30000000';
+
+
+flagIgnoreLoadFiles = 1; % 1 means to FORCE load of DEM data, ignoring prior MAT files
+% flagIgnoreLoadFiles = 0; % 0 means to EITHER use prior mat files AND load DEM data
+% flagIgnoreLoadFiles = 1; % -1 means to ONLY use prior mat files
 
 % Call the function
+warning('backtrace','on');
 warning('This function takes a VERY long time to run (hours). The user must uncomment to run it.')
-if 1==0
-	[LatLonLimits,zipPaths] = fcn_DEMImport_buildLatLonLimitFiles(rootPathName, (flagIgnoreLoadFiles), (figNum));
+if 1==1
+	[LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(...
+        rootPathName, (flagIgnoreLoadFiles), (figNum));
 end
 
-% sgtitle(titleString, 'Interpreter','none');
-% 
-% % Check variable types
-% assert(iscell(cell_array_of_lap_indices));
-% assert(iscell(cell_array_of_entry_indices));
-% assert(iscell(cell_array_of_exit_indices));
-% 
-% % Check variable sizes
-% Nlaps = 3;
-% assert(isequal(Nlaps,length(cell_array_of_lap_indices))); 
-% assert(isequal(Nlaps,length(cell_array_of_entry_indices))); 
-% assert(isequal(Nlaps,length(cell_array_of_exit_indices))); 
-% 
-% % Check variable values
-% % Are the laps starting at expected points?
-% assert(isequal(2,min(cell_array_of_lap_indices{1})));
-% assert(isequal(102,min(cell_array_of_lap_indices{2})));
-% assert(isequal(215,min(cell_array_of_lap_indices{3})));
-% 
-% % Are the laps ending at expected points?
-% assert(isequal(88,max(cell_array_of_lap_indices{1})));
-% assert(isequal(199,max(cell_array_of_lap_indices{2})));
-% assert(isequal(293,max(cell_array_of_lap_indices{3})));
-% 
-% % Make sure plot opened up
-% assert(isequal(get(gcf,'Number'),figNum));
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(LatLonLimits));
+assert(iscell(zipPaths));
+assert(isnumeric(FtLimits));
+
+% Check variable sizes
+Nfiles = size(LatLonLimits,1);
+assert(isequal(Nfiles,size(LatLonLimits,1))); 
+assert(isequal(Nfiles,size(zipPaths,1))); 
+assert(isequal(Nfiles,size(FtLimits,1))); 
+assert(isequal(4,size(LatLonLimits,2))); 
+assert(isequal(1,size(zipPaths,2))); 
+assert(isequal(4,size(FtLimits,2))); 
+
+% Check variable values
+% Not possible to check
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
 
 
 

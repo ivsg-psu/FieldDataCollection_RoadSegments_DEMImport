@@ -6,6 +6,11 @@
 % 2026_03_26 by Sean Brennan, sbrennan@psu.edu
 % - In script_test_fcn_DEMImport_extractLimitsFromZipFile
 %   % * Wrote the code originally
+%
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_fcn_DEMImport_extractLimitsFromZipFile
+%   % * Added test case for DEM imports where fields are missing. See Test
+%   %   % case 20003
 
 % TO-DO:
 %
@@ -194,6 +199,77 @@ assert(isequal(round(limitsFt/1E6,4),round([0.2000    0.2100    1.7900    1.8000
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
+
+
+%% TEST case: Test with a DEM that has missing info
+figNum = 20003;
+titleString = sprintf('TEST case: Test with a DEM that has missing info');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Remove tmpFolder if it is there
+tmpFolder = fullfile(pwd,'TempExtract');
+if exist(tmpFolder,'dir')
+	rmdir(tmpFolder, 's');
+end
+
+% Grab a zip file to use for testing
+% thisURL = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2008/40000000/42002730PAN_dem.zip';
+thisURL = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2008/30000000/38002680PAN_dem.zip';
+
+
+% Define a file name and directory to save results
+lasDirectory = fullfile(pwd,'LargeData','zipTestFiles_LAS');
+fcn_DebugTools_makeDirectory(lasDirectory);
+zipFile = fullfile(lasDirectory,'38002680PAN_dem.zip');
+
+% FOR DEBUGGING:
+% zipFile = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\North\2008\30000000\38002680PAN_dem.zip';
+
+if ~exist(zipFile,'file')
+	try
+		tic
+		websave(zipFile, thisURL);
+		saveTime = toc;
+		fprintf(1,'\tSaved temp file %s  in %.2f seconds \t', zipFile, saveTime)
+	catch
+		fprintf(1,'Unable to download file: %s \t', tempfile);
+		error('Unable to continue!');
+	end
+end
+
+
+% Call the function
+[limitsLatLon, limitsFt] = fcn_DEMImport_extractLimitsFromZipFile(zipFile, -2);
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Show that the temp folder is now there (was NOT deleted!)
+assert(exist(tmpFolder,'dir'))
+
+% Remove tmpFolder if it is there to avoid it being added to repo
+tmpFolder = fullfile(pwd,'TempExtract');
+if exist(tmpFolder,'dir')
+	rmdir(tmpFolder, 's');
+end
+
+% Check variable types
+assert(isnumeric(limitsLatLon));
+assert(isnumeric(limitsFt));
+
+% Check variable sizes
+assert(isequal(size(limitsLatLon),[1 4]));
+assert(isequal(size(limitsFt),[1 4]));
+
+% Check variable valueslimit
+assert(isequal(round(limitsLatLon,4),[40.7138   40.7414  -78.3941  -78.3578]));
+assert(isequal(round(limitsFt/1E6,4),round([0.2000    0.2100    1.7900    1.8000],4)));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+
+
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -95,6 +95,11 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 % - In fcn_DEMImport_queryElevationsFromMatchedTiles
 %   % * Fixed bug where input arguments are not imported if user specifies
 %   %   % fast mode and where input argument count number was wrong
+%
+% 2026_04_16 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Fixed queryMode in call to
+%   %   % fcn_DEMImport_queryElevationsFromSingleTile 
 
 % TO-DO:
 %
@@ -250,8 +255,9 @@ for tileIdx = 1:M_tiles
     theseQueryPoints = queryLatLon(pointRows,1:2);
 
     % Query elevations from this one tile
+    queryMode = 'Extrapolate';
     [tileElevations, insideTileFlag] = ...
-        fcn_DEMImport_queryElevationsFromSingleTile(localZipFile, theseQueryPoints, -1);
+        fcn_DEMImport_queryElevationsFromSingleTile(localZipFile, theseQueryPoints, (queryMode), (-1));
 
     % Write returned elevations back into the raw elevation matrix
     for nElevations = 1:numel(pointRows)

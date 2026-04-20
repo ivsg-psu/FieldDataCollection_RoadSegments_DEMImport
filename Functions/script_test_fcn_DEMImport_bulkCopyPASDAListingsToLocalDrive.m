@@ -53,7 +53,7 @@ dataStringToExtract = 'pamap';
 
 % Call the function
 warning('This function takes a VERY long time to run (hours). The user must uncomment to run it.')
-if 1==0
+if 1==1
 	fcn_DEMImport_bulkCopyPASDAListingsToLocalDrive(scrapeDirectoryResultPASDA, dataStringToExtract, -1)
 end
 % sgtitle(titleString, 'Interpreter','none');

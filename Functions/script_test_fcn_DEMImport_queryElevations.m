@@ -283,9 +283,9 @@ assert(all(abs(difference_InMeters(1:9,:)) < 1.0));
 figHandles = get(groot, 'Children');
 assert(~any(figHandles==figNum));
 
-%% DEMO case: show query using PennDOT data
+%% DEMO case: show query using PennDOT segment data
 figNum = 10004;
-titleString = sprintf('DEMO case: show query using PennDOT data');
+titleString = sprintf('DEMO case: show query using PennDOT segment data');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); close(figNum);
 
@@ -318,11 +318,32 @@ flag_loadDataFilesWhenPossible = 1;
 % Load the PennDOT LL data
 PreviousDataFileName = 'PennDOT_LLcoordinates';
 PreviouseDataFilePath = fullfile(pwd,'Data',cat(2,PreviousDataFileName,'.mat'));
-if flag_loadDataFilesWhenPossible && exist(PreviouseDataFilePath,'file')
-	load(PreviouseDataFilePath,'PennDOT_LLSegments_cellArray');
-else
-	error('Unable to load file: \n\t%s\nNeed to obtain this from the PennDOTSHP repo!',PreviouseDataFilePath);
+
+matlabFileObject = matfile(PreviouseDataFilePath);
+vars = who(matlabFileObject);
+expectedVariables = {'PennDOT_LLSegments_cellArray', 'PennDOT_LLSegments_matrix', 'usableTableRows'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
 end
+
+
+if 1==0
+    if flag_loadDataFilesWhenPossible && exist(PreviouseDataFilePath,'file')
+    	load(PreviouseDataFilePath,'PennDOT_LLSegments_cellArray');
+    else
+    	error('Unable to load file: \n\t%s\nNeed to obtain this from the PennDOTSHP repo!',PreviouseDataFilePath);
+    end
+end
+
 allPennDOTPoints = vertcat(PennDOT_LLSegments_cellArray{:});
 
 
@@ -346,13 +367,222 @@ sgtitle(titleString, 'Interpreter','none');
 assert(isnumeric(queriedElevationsInMeters));
 
 % Check variable sizes
-assert(isequal(size(queriedElevationsInMeters),size(LLdata(:,1))));
+assert(isequal(size(queriedElevationsInMeters,1),size(queryLatLon(:,1),1)));
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
 assert(~any(figHandles==figNum));
 
+%%%%%%%%%%%%%%%%%%%
+% Save results
 
+% Save the matrix version
+Npoints = size(PennDOT_LLSegments_matrix,1);
+PennDOT_LLASegments_matrix = ...
+    [PennDOT_LLSegments_matrix(:,1:2) nan(Npoints,1) PennDOT_LLSegments_matrix(:,3)];
+
+validPoints = ~isnan(PennDOT_LLSegments_matrix(:,1));
+PennDOT_LLASegments_matrix(validPoints,3) = queriedElevationsInMeters;
+
+% Save the cell array version
+indicies_cell_array = fcn_DebugTools_breakArrayByNans(PennDOT_LLASegments_matrix,-1);
+NcellArrays = size(indicies_cell_array,2);
+PennDOT_LLASegments_cellArray = cell(NcellArrays,1);
+for ith_cell = 1:NcellArrays
+    PennDOT_LLASegments_cellArray{ith_cell} = ...
+        PennDOT_LLASegments_matrix(indicies_cell_array{ith_cell}, :);
+end
+
+NewDataFileName = 'PennDOT_LLAcoordinates';
+NewDataFilePath = fullfile(pwd,'Data',cat(2,NewDataFileName,'.mat'));
+
+% Save file
+save(NewDataFilePath,'PennDOT_LLASegments_cellArray', 'PennDOT_LLASegments_matrix', 'usableTableRows');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Now query using PennDOT subsegment data
+figNum = 10005;
+titleString = sprintf('DEMO case: show query using PennDOT subsegment data');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); close(figNum);
+
+%%%%%%%%%%%%%
+% Load statewide DEM metadata
+pamap_lidar_limitsFile = fullfile(pwd,'Data','latlonLimits_pamap_lidar.mat');
+
+matlabFileObject = matfile(pamap_lidar_limitsFile);
+vars = who(matlabFileObject);
+expectedVariables = {'FtLimits', 'LatLonLimits', 'zipPaths'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
+end
+
+
+%%%%%%%%%%%%%
+% Define query. In this case, using PennDOT subsegments
+
+flag_loadDataFilesWhenPossible = 1;
+
+% Load the PennDOT LL data
+PreviousDataFileName = 'PennDOT_Subsegments';
+PreviouseDataFilePath = fullfile(pwd,'LargeData',cat(2,PreviousDataFileName,'.mat'));
+
+matlabFileObject = matfile(PreviouseDataFilePath);
+vars = who(matlabFileObject);
+expectedVariables = {'PennDOT_ENSegments_cellArray', 'PennDOT_ENsubSegments_cellArray', 'PennDOT_LLSegments_cellArray', 'PennDOT_LLsubSegments_cellArray'};
+
+for ith_expectedVariable = 1:length(expectedVariables)
+    thisExpectedVariable = expectedVariables{ith_expectedVariable};
+
+    if ismember(thisExpectedVariable, vars)
+        commandString = sprintf('%s = matlabFileObject.(thisExpectedVariable);', thisExpectedVariable);
+        eval(commandString);
+    else
+        warning('Variable %s not found in the limits file: %s.', ...
+            thisExpectedVariable, pamap_lidar_limitsFile);
+    end
+end
+
+
+if 1==0
+    if flag_loadDataFilesWhenPossible && exist(PreviouseDataFilePath,'file')
+    	load(PreviouseDataFilePath,'PennDOT_LLsubSegments_cellArray');
+    else
+    	error('Unable to load file: \n\t%s\nNeed to obtain this from the PennDOTSHP repo!',PreviouseDataFilePath);
+    end
+end
+
+%%%%%
+% Extract elevation
+
+% Define variables used within the loop
+requiredStrings = {'\DEM\', '\North\ or \South\'};
+% requiredStrings = {'DEM'};
+mergeMethod = 'mean';
+
+% This folder is where the PASDA zip files will be stored locally
+localRootFolder = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\';
+
+% Initialize output cell array
+PennDOT_LLAsubSegments_cellArray = PennDOT_LLsubSegments_cellArray;
+Nsegments = size(PennDOT_LLsubSegments_cellArray,1);
+
+% Loop through subsegments filling in height
+for ith_cell = 1:Nsegments
+    fprintf(1,'Checking segment %.0f of %.0f\n',ith_cell,Nsegments);
+    thisMatrix = PennDOT_LLAsubSegments_cellArray{ith_cell,1};
+    queryLatLon = thisMatrix(:,1:2);
+
+    [queriedElevationsInMeters] = ...
+    	fcn_DEMImport_queryElevations(queryLatLon, LatLonLimits, zipPaths,...
+        (requiredStrings), (mergeMethod), (localRootFolder), (figNum));
+    
+    newMatrix = [thisMatrix(:,1:2) queriedElevationsInMeters thisMatrix(:,3:end)];
+    PennDOT_LLAsubSegments_cellArray{ith_cell,1} = newMatrix;
+
+end
+
+
+
+%%
+
+%%%%%%%%%%%%%%%%%%%
+% Save results
+PennDOT_LLAsubSegments_matrix = fcn_DebugTools_stackCellArrayIntoMatrix(PennDOT_LLAsubSegments_cellArray,-1);
+
+NewDataFileName = 'PennDOT_LLAsubSegment_coordinates';
+NewDataFilePath = fullfile(pwd,'LargeData',cat(2,NewDataFileName,'.mat'));
+
+% Save file
+save(NewDataFilePath,'PennDOT_LLAsubSegments_cellArray', 'PennDOT_LLAsubSegments_matrix','PennDOT_LLASegments_cellArray', 'PennDOT_LLASegments_matrix');
+
+
+%% Plot gradients
+
+NewDataFileName = 'PennDOT_LLAsubSegment_coordinates';
+NewDataFilePath = fullfile(pwd,'LargeData',cat(2,NewDataFileName,'.mat'));
+
+% Save file
+load(NewDataFilePath,'PennDOT_LLAsubSegments_cellArray', 'PennDOT_LLAsubSegments_matrix','PennDOT_LLASegments_cellArray', 'PennDOT_LLASegments_matrix');
+
+Nsegments = size(PennDOT_LLAsubSegments_cellArray,1);
+PennDOT_LLAGradientSubSegments_cellArray = PennDOT_LLAsubSegments_cellArray;
+% Loop through subsegments filling in gradient. The last point in eachs
+% subsegment has an undefined gradient - we just repeat the last point. The
+% gradient is calculated by simply taking the numerical derivative.
+for ith_cell = 1:Nsegments
+    fprintf(1,'Gradient calculation for segment %.0f of %.0f\n',ith_cell,Nsegments);
+    thisMatrix = PennDOT_LLAsubSegments_cellArray{ith_cell,1};
+    altitudes = thisMatrix(:,3);
+
+    deltaStation = 1.0; % This is the distance between substation points. Units are meters
+    gradient = diff(altitudes)/deltaStation;
+    fullGradient = [gradient; gradient(end)];
+    Npoints = size(fullGradient,1);
+
+    % For debugging
+    if 1==1
+
+        LLIdata = [thisMatrix(:,1:2) altitudes];
+        
+        debug_fig_num = 47474;
+        figure(debug_fig_num); clf;
+
+        subplot(2,2,1);
+        geoplot(LLIdata(:,1),LLIdata(:,2),'LineWidth',3);
+        geobasemap('satellite');
+
+        subplot(2,2,2);
+
+        % Specify plot style
+        clear plotFormat
+        plotFormat.LineStyle = 'none';
+        plotFormat.LineWidth = 3;
+        plotFormat.Marker = '.';
+        plotFormat.MarkerSize = 5;
+        colorMapString = 'turbo';
+
+        % Reduce the colormap
+        Ncolors = 40;
+        colorMapMatrix = colormap(colorMapString);
+        reducedColorMap = fcn_plotRoad_reduceColorMap(colorMapMatrix, Ncolors, -1);
+
+        % % Specify the sizes (must be same size as reducedColorMap)
+        % markerSizeMatrix = 2*(1:Ncolors)';
+        % plotFormat.MarkerSize = markerSizeMatrix;
+
+
+
+        setenv('MATLABFLAG_PLOTROAD_REFERENCE_LATITUDE',sprintf('%.8',mean(LLIdata(:,1))));
+        setenv('MATLABFLAG_PLOTROAD_REFERENCE_LONGITUDE',sprintf('%.8',mean(LLIdata(:,2))));
+        setenv('MATLABFLAG_PLOTROAD_REFERENCE_ALTITUDE',sprintf('%.3',mean(LLIdata(:,3))));
+
+
+        [h_plot, indiciesInEachPlot]  = fcn_plotRoad_plotLLI(LLIdata, (plotFormat),  (reducedColorMap), (debug_fig_num));
+        % set(gca,'MapCenter', [40.864567288895223 -77.830697913696483], 'ZoomLevel',19.5);
+        % title(sprintf('Example %.0d: showing use of a complex plotFormat',figNum), 'Interpreter','none');
+
+
+        plot((1:Npoints)',altitudes,'k.-','MarkerSize',1,'LineWidth',1);
+        subplot(2,2,3);
+        plot((1:Npoints)',altitudes,'k.-','MarkerSize',1,'LineWidth',1);
+        subplot(2,2,4);
+        plot((1:Npoints)',fullGradient,'k.-','MarkerSize',1,'LineWidth',1);
+    end
+    
+    newMatrix = [thisMatrix(:,1:end-1) fullGradient thisMatrix(:,end)];
+    PennDOT_LLAGradientSubSegments_cellArray{ith_cell,1} = newMatrix;
+
+end
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

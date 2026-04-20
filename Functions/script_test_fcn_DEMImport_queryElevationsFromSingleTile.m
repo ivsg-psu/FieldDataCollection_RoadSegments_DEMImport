@@ -14,6 +14,10 @@
 % 2026_04_16 by Aneesh Batchu, abb6486@psu.edu
 % - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
 %   % * Added a test case to demonstrate EXTRAPOLATE query mode (20003)
+% 
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Fixed minor error in assertion so script would complete correctly
 
 %% Set up the workspace
 close all
@@ -328,7 +332,7 @@ assert(max(abs(limitsLatLon(:)-limitsLatLon_ref(:))) < 1e-12, 'limitsLatLon does
 
 % Query points check
 assert(all(isnan(elevationsInMeters)),'Expected altitudes of the queryPoints to be NaN');
-assert(all(insideTileFlag),'Expected all test-track query points to be inside the chosen DEM tile.');
+assert(~all(insideTileFlag),'Expected some test-track query points to be OUTSIDE the chosen DEM tile.');
 
 
 % Make sure plot opened up
@@ -414,6 +418,51 @@ assert(all(~isnan(elevationsInMeters)),'Expected all query points to be extrapol
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
+
+%% TEST case: 32001260PAS_dem with bad data
+figNum = 20004;
+titleString = sprintf('TEST case: 32001260PAS_dem with bad data');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+localZipFilePath = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download\pamap\pamap_lidar\cycle1\DEM\South\2006\30000000\32001260PAS_dem.zip';
+
+% Reference 
+[limitsLatLon_ref, ~] = fcn_DEMImport_extractLimitsFromZipFile(localZipFilePath, -2);
+limitsLatLon_ref(1,1:2)= [40.156390500000001  40.184612999999999];
+meanLatLon = [mean(limitsLatLon_ref(1,1:2)) mean(limitsLatLon_ref(1,3:4))];
+meanLatLon(1,1) = 40.172;
+
+Nqueries = 100;
+variationLL = 0.01;
+rng(1); % For repeatability
+queryLatLon = repmat(meanLatLon,Nqueries,1) + variationLL*randn(Nqueries,2);
+
+% ONLY FOR TESTING FAIL CASE --> queryLatLon = [queryLatLon; meanLatLon+[1 1]; meanLatLon-[1 1]];
+
+% Query mode 
+queryMode = 'Extrapolate';
+
+[elevationsInMeters, insideTileFlag, limitsLatLon] = fcn_DEMImport_queryElevationsFromSingleTile(localZipFilePath, queryLatLon, (queryMode), (figNum));
+
+% Size checks
+assert(isequal(size(elevationsInMeters), [size(queryLatLon,1), 1]));
+assert(isequal(size(insideTileFlag), [size(queryLatLon,1), 1]));
+assert(isequal(size(limitsLatLon), size(limitsLatLon_ref)));
+
+% Limits check
+assert(max(abs(limitsLatLon(:)-limitsLatLon_ref(:))) < 1e-12, 'limitsLatLon does not match extracted reference limits.');
+
+% Query points check
+assert(all(insideTileFlag),'Expected all test-track query points to be inside the chosen DEM tile.');
+
+% difference_InMeters = elevationsInMeters - 129.6037;
+% assert(all(abs(difference_InMeters) < 1.0,'all'));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

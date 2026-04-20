@@ -35,7 +35,6 @@ function scrapeDirectoryResultPASDA = fcn_DEMImport_scrapePASDA(varargin)
 % DEPENDENCIES:
 %
 %      fcn_DebugTools_checkInputsToFunctions
-%      fcn_DEMImport_importZipFromURL
 %
 % EXAMPLES:
 %

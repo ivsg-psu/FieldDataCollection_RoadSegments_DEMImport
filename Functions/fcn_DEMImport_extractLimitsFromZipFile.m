@@ -48,6 +48,10 @@ function [limitsLatLon, limitsFt] = fcn_DEMImport_extractLimitsFromZipFile(zipFi
 % 2026_04_10 by Sean Brennan, sbrennan@psu.edu
 % - In fcn_DEMImport_extractLimitsFromZipFile
 %   % * Functionalized plotting using call to fcn_DEMImport_plotLatLonLimits
+%
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_extractLimitsFromZipFile
+%   % * Added special case handling where zip file may be corrupt
 
 % TO-DO:
 %
@@ -232,6 +236,10 @@ else
 	limitsFt = nan(1,4);
 	return;
 end
+
+% if any(isnan(limitsLatLon),'all') || any(isnan(limitsFt),'all')
+%     disp('stop here');
+% end
 
 % Ensure cleanup on function exit
 if figNum~=-2

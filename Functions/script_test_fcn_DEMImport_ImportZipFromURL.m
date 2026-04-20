@@ -6,6 +6,10 @@
 % 2026_03_31 by Sean Brennan, sbrennan@psu.edu
 % - In script_test_fcn_DEMImport_importZipFromURL
 %   % * Wrote the code originally, using breakDataIntoLaps as starter
+%
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In script_test_fcn_DEMImport_importZipFromURL
+%   % * Added expectedBytes input
 
 % TO-DO:
 %
@@ -42,11 +46,13 @@ fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 
 URLtoImport = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2007/30000000/38002090PAN_dem.zip';
 estimatedSeconds = [];
+expectedBytes = [];
 PASDA_URL_Prefix = [];
 rootOfLargeDataPath = [];
 
 % Call the function
-fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (PASDA_URL_Prefix), (rootOfLargeDataPath), (figNum));
+fcn_DEMImport_importZipFromURL(URLtoImport, ...
+    (estimatedSeconds), (expectedBytes), (PASDA_URL_Prefix), (rootOfLargeDataPath), (figNum));
 
 % sgtitle(titleString, 'Interpreter','none');
 % 
@@ -75,6 +81,48 @@ fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (PASDA_URL_Prefi
 % % Make sure plot opened up
 % assert(isequal(get(gcf,'Number'),figNum));
 
+%% DEMO case: load 38002090PAN_dem.zip
+figNum = 10002;
+titleString = sprintf('DEMO case: load 38002090PAN_dem.zip');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+% figure(figNum); clf;
+
+URLtoImport = 'https://www.pasda.psu.edu/download/pamap/pamap_lidar/cycle1/DEM/North/2007/30000000/38002090PAN_dem.zip';
+estimatedSeconds = [];
+expectedBytes = 18335485;
+PASDA_URL_Prefix = [];
+rootOfLargeDataPath = [];
+
+% Call the function
+fcn_DEMImport_importZipFromURL(URLtoImport, ...
+    (estimatedSeconds), (expectedBytes), (PASDA_URL_Prefix), (rootOfLargeDataPath), (figNum));
+
+% sgtitle(titleString, 'Interpreter','none');
+% 
+% % Check variable types
+% assert(iscell(cell_array_of_lap_indices));
+% assert(iscell(cell_array_of_entry_indices));
+% assert(iscell(cell_array_of_exit_indices));
+% 
+% % Check variable sizes
+% Nlaps = 3;
+% assert(isequal(Nlaps,length(cell_array_of_lap_indices))); 
+% assert(isequal(Nlaps,length(cell_array_of_entry_indices))); 
+% assert(isequal(Nlaps,length(cell_array_of_exit_indices))); 
+% 
+% % Check variable values
+% % Are the laps starting at expected points?
+% assert(isequal(2,min(cell_array_of_lap_indices{1})));
+% assert(isequal(102,min(cell_array_of_lap_indices{2})));
+% assert(isequal(215,min(cell_array_of_lap_indices{3})));
+% 
+% % Are the laps ending at expected points?
+% assert(isequal(88,max(cell_array_of_lap_indices{1})));
+% assert(isequal(199,max(cell_array_of_lap_indices{2})));
+% assert(isequal(293,max(cell_array_of_lap_indices{3})));
+% 
+% % Make sure plot opened up
+% assert(isequal(get(gcf,'Number'),figNum));
 
 
 %% Test cases start here. These are very simple, usually trivial

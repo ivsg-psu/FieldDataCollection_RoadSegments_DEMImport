@@ -1,12 +1,12 @@
-function [mergedElevations, rawElevationMatrix, queryStatus, flagTileWasUsed] = ...
-    fcn_DEMImport_queryElevations(queryLatLon, LatLonLimits, zipPaths, varargin)
-%% fcn_DEMImport_queryElevations 
+function [mergedElevations, rawElevationMatrix, queryStatus] = ...
+    fcn_DEMImport_queryElevationsByRow(queryLatLon, LatLonLimits, zipPaths, varargin)
+%% fcn_DEMImport_queryElevationsByRow 
 % 
 % Queries elevations for a set of latitude/longitude points 
 %
 % FORMAT: 
 %       [queriedElevationsInMeters] = ...
-%           fcn_DEMImport_queryElevations(queryLatLon, LatLonLimits, zipPaths,..
+%           fcn_DEMImport_queryElevationsByRow(queryLatLon, LatLonLimits, zipPaths,..
 %               (requiredStrings), (mergeMethod), (localRootFolder), (figNum))
 % INPUTS:
 %      queryLatLon:  N x 2 matrix of query latitude/longitude points
@@ -57,8 +57,6 @@ function [mergedElevations, rawElevationMatrix, queryStatus, flagTileWasUsed] = 
 %       .mergeMethod
 %       .localZipFilesUsed
 %
-%   flagTileWasUsed - a logical array of size N x 1 which is true if the
-%   tile was used, 0 otherwise.
 %
 % DEPENDENCIES:
 %
@@ -225,8 +223,7 @@ queryBoundingBox = [lat_min lat_max lon_min lon_max];
 
 
 [overlappingLatLonLimits, overlappingZipPaths, overlappingEntriesFlags] = ...
-    fcn_DEMImport_selectEntriesByBoundingBox(...
-    queryBoundingBox, matchingLatLonLimits, matchingZipPaths, -1); %#ok<ASGLU>
+    fcn_DEMImport_selectEntriesByBoundingBox(queryBoundingBox, matchingLatLonLimits, matchingZipPaths, -1); %#ok<ASGLU>
 
 if 1==0
     clear plotFormat
@@ -241,54 +238,65 @@ if 1==0
     fcn_plotRoad_plotLL((queryLatLon), (plotFormat), (figNum));
 end
 
-%%%%%%%%%%%
-% Step 3: assign DEM tiles to query points
-[matchingTileIndexMatrix, pointTileLogicalMatrix, unmatchedPointFlags, ...
-    multipleMatchFlags, numMatchesPerPoint] = ...
-    fcn_DEMImport_assignTilesToQueryPoints(queryLatLon, overlappingLatLonLimits, -1); %#ok<ASGLU>
+Npoints = size(queryLatLon,1);
+allElevations = nan(Npoints,1);
+allUnmatchedPointFlags = nan(Npoints,1);
 
+for ith_limit = 1:size(overlappingLatLonLimits,1)
+    
+    fprintf(1,'Checking tile %.0f of %.0f \n',ith_limit,size(overlappingLatLonLimits,1));
 
-% For debugging
-if 1==0
-    temp = unmatchedPointFlags;
-    clear plotFormat
-    plotFormat.Color = [1 1 1];
-    plotFormat.Marker = '.';
-    plotFormat.MarkerSize = 10;
-    plotFormat.LineStyle = 'none';
-    plotFormat.LineWidth = 3;
+    thisLimit = overlappingLatLonLimits(ith_limit,:);
 
-    figNum = 99999;
-
-    fcn_plotRoad_plotLL((queryLatLon(temp,1:2)), (plotFormat), (figNum));
-end
-
-flagTileWasUsed = any(pointTileLogicalMatrix,1)';
-
-if 1==0
-    % Process ALL tiles, even if 0 matches were found
 
     %%%%%%%%%%%
-    % Step 4: query elevations from matched tiles
-    [mergedElevations, rawElevationMatrix, queryStatus] = ...
-        fcn_DEMImport_queryElevationsFromMatchedTiles( ...
-        queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, ...
-        mergeMethod, localRootFolder, -1);
-else
-    % Process ONLY tiles where matches were found
+    % Step 3: assign DEM tiles to query points
+    [matchingTileIndexMatrix, pointTileLogicalMatrix, unmatchedPointFlags, ...
+        multipleMatchFlags, numMatchesPerPoint] = ...
+        fcn_DEMImport_assignTilesToQueryPoints(queryLatLon, thisLimit, -1); %#ok<ASGLU>
 
+    if any(matchingTileIndexMatrix)
+        % For debugging
+        if 1==0
+            temp = unmatchedPointFlags;
+            clear plotFormat
+            plotFormat.Color = [1 1 1];
+            plotFormat.Marker = '.';
+            plotFormat.MarkerSize = 10;
+            plotFormat.LineStyle = 'none';
+            plotFormat.LineWidth = 3;
 
-    newIndex = cumsum(flagTileWasUsed).*flagTileWasUsed;
-    newMatchingTileIndexMatrix = matchingTileIndexMatrix;
-    newMatchingTileIndexMatrix(~isnan(newMatchingTileIndexMatrix)) = newIndex(matchingTileIndexMatrix(~isnan(matchingTileIndexMatrix)));
-    newOverlappingZipPaths = overlappingZipPaths(flagTileWasUsed);
+            figNum = 99999;
 
-    %%%%%%%%%%%
-    % Step 4: query elevations from matched tiles
-    [mergedElevations, rawElevationMatrix, queryStatus] = ...
-        fcn_DEMImport_queryElevationsFromMatchedTiles( ...
-        queryLatLon, newMatchingTileIndexMatrix, newOverlappingZipPaths, ...
-        mergeMethod, localRootFolder, -1);
+            fcn_plotRoad_plotLL((queryLatLon(temp,1:2)), (plotFormat), (figNum));
+        end
+
+        if 1==0
+            % Process ALL tiles, even if 0 matches were found
+
+            %%%%%%%%%%%
+            % Step 4: query elevations from matched tiles
+            [mergedElevations, rawElevationMatrix, queryStatus] = ...
+                fcn_DEMImport_queryElevationsFromMatchedTiles( ...
+                queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, ...
+                mergeMethod, localRootFolder, -1);
+        else
+            % Process ONLY tiles where matches were found
+
+            flagTileWasUsed = any(pointTileLogicalMatrix,1)';
+            newIndex = cumsum(flagTileWasUsed).*flagTileWasUsed;
+            newMatchingTileIndexMatrix = matchingTileIndexMatrix;
+            newMatchingTileIndexMatrix(~isnan(newMatchingTileIndexMatrix)) = newIndex(matchingTileIndexMatrix(~isnan(matchingTileIndexMatrix)));
+            newOverlappingZipPaths = overlappingZipPaths(flagTileWasUsed);
+
+            %%%%%%%%%%%
+            % Step 4: query elevations from matched tiles
+            [mergedElevations, rawElevationMatrix, queryStatus] = ...
+                fcn_DEMImport_queryElevationsFromMatchedTiles( ...
+                queryLatLon, newMatchingTileIndexMatrix, newOverlappingZipPaths, ...
+                mergeMethod, localRootFolder, -1);
+        end
+    end
 end
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -303,8 +311,8 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
 
-    % figure(figNum);
-    % close(figNum);
+    figure(figNum);
+    close(figNum);
 
     % For debugging
     if 1==0

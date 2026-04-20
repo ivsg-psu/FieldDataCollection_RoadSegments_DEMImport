@@ -4,7 +4,8 @@ function saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, varargin)
 %
 % FORMAT:
 %
-%      fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (PASDA_URL_Prefix), (rootOfLargeDataPath), (figNum));
+%      fcn_DEMImport_importZipFromURL(URLtoImport,  ...
+%      (estimatedSeconds), (expectedBytes), (PASDA_URL_Prefix), (rootOfLargeDataPath), (figNum));
 %
 % INPUTS:
 %
@@ -13,7 +14,11 @@ function saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, varargin)
 %      (OPTIONAL INPUTS)
 %
 %      estimatedSeconds - an estimate of the download time in seconds
-% 
+%
+%      expectedBytes - how many bytes should be in the file. Set to -1 to
+%      force a download even if file exists and has nonzero bytes. Default
+%      is -1.
+%
 %      PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/';
 %
 %      rootOfLargeDataPath = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
@@ -53,6 +58,11 @@ function saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, varargin)
 % - In fcn_DEMImport_importZipFromURL
 %   % * Added estimated completion time as input, actual time as output
 %   % * Added error reporting
+%
+% 2026_04_17 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_importZipFromURL
+%   % * Added expectedBytes input
+%   % * Added skip of files if they exist and have expected bytes
 
 % TO-DO:
 %
@@ -67,7 +77,7 @@ function saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, varargin)
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 5; % The largest Number of argument inputs to the function
+MAX_NARGIN = 6; % The largest Number of argument inputs to the function
 flag_max_speed = 0; % The default. This runs code with all error checking
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; % Flag to plot the results for debugging
@@ -122,9 +132,7 @@ end
 % The following area checks for variable argument inputs (varargin)
 
 % Does the user want to specify the estimatedSeconds?
-% Set defaults first:
 estimatedSeconds = []; % Default case
-
 % Check for user input
 if 2 <= nargin
     temp = varargin{1};
@@ -134,10 +142,24 @@ if 2 <= nargin
     end
 end
 
-% Does the user want to specify PASDA_URL_Prefix?
-PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/'; % Default value
+% Does the user want to specify the estimatedSeconds?
+expectedBytes = -1; % Default case
+% Check for user input
 if 3 <= nargin
     temp = varargin{2};
+    if ~isempty(temp)
+        % Set the estimatedSeconds
+        expectedBytes = temp;
+    end
+end
+
+
+
+
+% Does the user want to specify PASDA_URL_Prefix?
+PASDA_URL_Prefix = 'https://www.pasda.psu.edu/download/'; % Default value
+if 4 <= nargin
+    temp = varargin{3};
     if ~isempty(temp)
         PASDA_URL_Prefix = temp;
     end
@@ -145,9 +167,9 @@ end
 
 
 % Does the user want to specify rootOfLargeDataPath?
-rootOfLargeDataPath = 'D:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
-if 4 <= nargin
-    temp = varargin{3};
+rootOfLargeDataPath = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
+if 5 <= nargin
+    temp = varargin{4};
     if ~isempty(temp)
         rootOfLargeDataPath = temp;
     end
@@ -156,7 +178,7 @@ end
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
-if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         figNum = temp; %#ok<NASGU>
@@ -185,50 +207,61 @@ folderPathLargeData = fcn_INTERNAL_buildAndCheckFolderPathFromURL(rootOfLargeDat
 
 % Make sure function worked
 if ~exist(folderPathLargeData,'dir')
-	error('Path does not exist: %s',pathToFolder);
+    error('Path does not exist: %s',pathToFolder);
 end
 
 % Is an estimate provided?
 if ~isempty(estimatedSeconds)
-	fprintf(1,'Estimating %.2f sec to complete. ',estimatedSeconds)
+    fprintf(1,'Estimating %.2f sec to complete. ',estimatedSeconds)
 end
 
 % Define the output file with full path
 if URLtoImport(end)=='/'
-	fprintf(1,'Made directory for %s \n', URLtoImport);
-	saveTime = toc;
+    fprintf(1,'Found or made directory for %s \n', URLtoImport);
+    saveTime = toc;
 else
-	fileName = URLtoImport(lastIndex+1:end);
-	outfile = fullfile(folderPathLargeData,fileName);
+    fileName = URLtoImport(lastIndex+1:end);
+    outfile = fullfile(folderPathLargeData,fileName);
 
-	if exist(outfile,'file') 
-		fprintf(1,'Already completed for %s \n', fileName);
-		saveTime = -1;
-	else
-		% Attempt to save results to a temp zip file
-		tempfile = fullfile(pwd,'tempDownloadOfDEM.zip');
+    % Check number of bytes in the file. If we are trying to download it
+    % and it already exists AND has nonzero bytes, skip it
+    flagSkipFile = false;
+    if exist(outfile,'file')
+        fileInfo = dir(outfile);
+        ratioOfSizes = fileInfo.bytes/expectedBytes;
+        if fileInfo.bytes>0 && expectedBytes>0 && ratioOfSizes>0.8 && ratioOfSizes<1.1
+            flagSkipFile = true;
+        end
+    end
 
-		try
+    if flagSkipFile
+        fprintf(1,'Already completed for %s \n', fileName);
+        saveTime = -1;
+    else
+        % Attempt to save results to a temp zip file
+        tempfile = fullfile(pwd,'tempDownloadOfDEM.zip');
 
-			if 1==1
-				websave(tempfile, URLtoImport);
-			else
-				% Does not work
-				fcn_INTERNAL_downloadWithProgress(tempfile, URLtoImport);
-			end
+        try
 
-			saveTime = toc;
-			fprintf(1,'Success for %s (%.2f sec) \n', fileName, saveTime)
+            if 1==1
+                websave(tempfile, URLtoImport);
+            else
+                % Does not work
+                fcn_INTERNAL_downloadWithProgress(tempfile, URLtoImport);
+            end
 
-			% Move temp file to permanent file
-			movefile(tempfile, outfile)
+            saveTime = toc;
+            fprintf(1,'Success for %s (%.2f sec) \n', fileName, saveTime)
 
-		catch ME
-			fprintf(1,'Fail for %s. Returned error: %s\n', fileName, ME.message);
-			saveTime = toc;
-		end
+            % Move temp file to permanent file
+            movefile(tempfile, outfile)
 
-	end
+        catch ME
+            fprintf(1,'Fail for %s. Returned error: %s\n', fileName, ME.message);
+            saveTime = toc;
+        end
+
+    end
 end
 
 
@@ -245,8 +278,8 @@ end
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if flag_do_plots
-    
-      
+
+
 end
 
 if flag_do_debug
@@ -277,7 +310,7 @@ end % Ends main function
 % total = conn.getContentLengthLong();
 % in = conn.getInputStream();
 % fos = java.io.FileOutputStream(outFile);
-% 
+%
 % bsize = 8192*2^10;
 % buffer = zeros(1,bsize,'uint8');
 % nread = 0;
@@ -314,14 +347,14 @@ function fcn_INTERNAL_downloadWithProgress(outFile, urlStr)
 
 req = matlab.net.http.RequestMessage('GET');
 progressFn = @(bytesRead, totalBytes) fprintf(1, 'Downloaded %d / %d bytes (%.1f%%)\n', ...
-	bytesRead, totalBytes, 100*bytesRead/max(1,totalBytes));
+    bytesRead, totalBytes, 100*bytesRead/max(1,totalBytes));
 options = matlab.net.http.HTTPOptions('ProgressMonitor', progressFn);
 resp = req.send(urlStr, options);
 % Save body if needed:
 if resp.StatusCode == 200
-	fid = fopen(outFile,'w');
-	fwrite(fid, resp.Body.Data);
-	fclose(fid);
+    fid = fopen(outFile,'w');
+    fwrite(fid, resp.Body.Data);
+    fclose(fid);
 end
 end
 
@@ -335,30 +368,30 @@ folderStructureString = extractAfter(thisURLPrefix,PASDA_URL_Prefix);
 cellArrayOfFolders = strsplit(folderStructureString,'/');
 
 if ~exist(rootOfPath,'dir')
-	[status,msg,msgID] = mkdir(rootOfPath);
-	if status~=1
-		warning('Attempt to make directory:\n\t%s\nfailed. Details are below:\n',rootOfPath);
-		fprintf(1,'\tmsg: \t%s\n',msg);
-		fprintf(1,'\tmsgID: \t%s\n',msgID);
-		error('unable to continue - exiting.');
-	end
+    [status,msg,msgID] = mkdir(rootOfPath);
+    if status~=1
+        warning('Attempt to make directory:\n\t%s\nfailed. Details are below:\n',rootOfPath);
+        fprintf(1,'\tmsg: \t%s\n',msg);
+        fprintf(1,'\tmsgID: \t%s\n',msgID);
+        error('unable to continue - exiting.');
+    end
 end
 
 % Build folder sequence up from URL
 folderPathLargeData = rootOfPath;
 for ith_folder = 1:length(cellArrayOfFolders)
-	thisFolder = cellArrayOfFolders{ith_folder};
-	if ~isempty(thisFolder)
-		folderPathLargeData = fullfile(folderPathLargeData,thisFolder);
-		if ~exist(folderPathLargeData,'dir')
-			[status,msg,msgID] = mkdir(folderPathLargeData);
-			if status~=1
-				warning('Attempt to make directory:\n\t%s\nfailed. Details are below:\n',folderPathLargeData);
-				fprintf(1,'\tmsg: \t%s\n',msg);
-				fprintf(1,'\tmsgID: \t%s\n',msgID);
-				error('unable to continue - exiting.');
-			end
-		end
-	end
+    thisFolder = cellArrayOfFolders{ith_folder};
+    if ~isempty(thisFolder)
+        folderPathLargeData = fullfile(folderPathLargeData,thisFolder);
+        if ~exist(folderPathLargeData,'dir')
+            [status,msg,msgID] = mkdir(folderPathLargeData);
+            if status~=1
+                warning('Attempt to make directory:\n\t%s\nfailed. Details are below:\n',folderPathLargeData);
+                fprintf(1,'\tmsg: \t%s\n',msg);
+                fprintf(1,'\tmsgID: \t%s\n',msgID);
+                error('unable to continue - exiting.');
+            end
+        end
+    end
 end
 end % Ends fcn_INTERNAL_buildAndCheckFolderPathFromURL
