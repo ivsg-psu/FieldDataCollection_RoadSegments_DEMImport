@@ -105,6 +105,11 @@ function [elevationsInMeters, insideTileFlag, limitsLatLon, trueTileCornerLatLon
 %   % * Separated inclusion validity checking for interpolate versus
 %   % extrapolate settings, so that warnings are not constantly thrown for
 %   % extrapolate cases.
+% 
+% 2026_04_22 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Shut off printing if data outside of DEM bounds, except in debug
+%   %   % mode
 
 % TO-DO:
 %
@@ -348,7 +353,7 @@ trueTileCornerLatLon = [min(latCorners), max(latCorners), min(lonCorners), max(l
 
 
 % Make sure all are inside
-if ~all(bothInside,'all')
+if flag_do_debug && ~all(bothInside,'all')
     notInside = find(~bothInside);
     for ith_notInside = 1:length(notInside)
         ith_queryPoint = notInside(ith_notInside);

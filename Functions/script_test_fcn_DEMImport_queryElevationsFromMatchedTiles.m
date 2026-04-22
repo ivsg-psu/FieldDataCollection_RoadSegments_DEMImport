@@ -101,22 +101,24 @@ fcn_DebugTools_makeDirectory(localRootFolder);
         queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, ...
         mergeMethod, localRootFolder, figNum);
 
-%%%%
-%  Display results
-fprintf(1,'\nMerged elevations (m):\n');
-disp(mergedElevations);
-
-fprintf(1,'\nRaw elevation matrix (m):\n');
-disp(rawElevationMatrix);
-
-fprintf(1,'\nQuery status:\n');
-disp(queryStatus);
-
 % Compare to geoid-corrected truth
 difference_InMeters = mergedElevations - trueAltitude_InMeters;
 
-fprintf(1,'\nDifference between merged DEM elevations and truth (m):\n');
-disp(difference_InMeters);
+%%%%
+%  Display results?
+if 1==0
+    fprintf(1,'\nMerged elevations (m):\n');
+    disp(mergedElevations);
+
+    fprintf(1,'\nRaw elevation matrix (m):\n');
+    disp(rawElevationMatrix);
+
+    fprintf(1,'\nQuery status:\n');
+    disp(queryStatus);
+
+    fprintf(1,'\nDifference between merged DEM elevations and truth (m):\n');
+    disp(difference_InMeters);
+end
 
 %%%%
 %  Assertions
@@ -245,22 +247,25 @@ localRootFolder = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImpo
         queryLatLon, matchingTileIndexMatrix, overlappingZipPaths, ...
         mergeMethod, localRootFolder, figNum);
 
-%%%%
-%  Display results
-fprintf(1,'\nMerged elevations (m):\n');
-disp(mergedElevations);
-
-fprintf(1,'\nRaw elevation matrix (m):\n');
-disp(rawElevationMatrix);
-
-fprintf(1,'\nQuery status:\n');
-disp(queryStatus);
-
 % Compare to geoid-corrected truth
 difference_InMeters = mergedElevations - trueAltitude_InMeters;
 
-fprintf(1,'\nDifference between merged DEM elevations and truth (m):\n');
-disp(difference_InMeters);
+%%%%
+%  Display results?
+if 1==0
+    fprintf(1,'\nMerged elevations (m):\n');
+    disp(mergedElevations);
+
+    fprintf(1,'\nRaw elevation matrix (m):\n');
+    disp(rawElevationMatrix);
+
+    fprintf(1,'\nQuery status:\n');
+    disp(queryStatus);
+
+
+    fprintf(1,'\nDifference between merged DEM elevations and truth (m):\n');
+    disp(difference_InMeters);
+end
 
 %%%%
 %  Assertions

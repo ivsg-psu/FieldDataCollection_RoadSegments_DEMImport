@@ -100,6 +100,11 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 % - In fcn_DEMImport_queryElevationsFromMatchedTiles
 %   % * Fixed queryMode in call to
 %   %   % fcn_DEMImport_queryElevationsFromSingleTile 
+%
+% 2026_04_22 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Supressed printing if figNum is empty
+%   % * Supressed disp of results if figNum is given
 
 % TO-DO:
 %
@@ -109,6 +114,10 @@ function [mergedElevations, rawElevationMatrix, queryStatus] = ...
 %   %   % bug
 %   % * The test script is not in standard form (variable type, then size,
 %   %   % then values). Need to fix this.
+%
+% 2026_04_22 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Need some type of graphical output, not print statements
 
 %% Debugging and Input checks
 
@@ -228,7 +237,7 @@ NfoundTotal = 0;
 for tileIdx = 1:M_tiles
     thisZipPathEntry = overlappingZipPaths{tileIdx};
 
-    if flag_do_plots
+    if flag_do_plots && flag_do_debug
         fprintf(1,'Processing file: %s',thisZipPathEntry);
     end
 
@@ -239,8 +248,10 @@ for tileIdx = 1:M_tiles
     [pointRows, pointCols] = find(matchingTileIndexMatrix == tileIdx);
     
     NfoundTotal = NfoundTotal + length(pointRows);
-    fprintf(1,' %.0f found here, percent done overall: %.2f\n',length(pointRows), NfoundTotal*100/N_queryPoints);
-    
+
+    if ~isempty(figNum) && flag_do_debug
+        fprintf(1,' %.0f found here, percent done overall: %.2f\n',length(pointRows), NfoundTotal*100/N_queryPoints);
+    end
 
     % If no query point uses this tile, skip it
     if isempty(pointRows)
@@ -323,14 +334,16 @@ if flag_do_plots
     figure(figNum);
     close(figNum);
 
-    fprintf(1,'\nMerged elevations:\n');
-    disp(mergedElevations);
+    if 1==0
+        fprintf(1,'\nMerged elevations:\n');
+        disp(mergedElevations);
 
-    fprintf(1,'\nRaw elevation matrix:\n');
-    disp(rawElevationMatrix);
+        fprintf(1,'\nRaw elevation matrix:\n');
+        disp(rawElevationMatrix);
 
-    fprintf(1,'\nNumber of valid elevations per point:\n');
-    disp(queryStatus.numValidElevationsPerPoint);
+        fprintf(1,'\nNumber of valid elevations per point:\n');
+        disp(queryStatus.numValidElevationsPerPoint);
+    end
 
 end
 

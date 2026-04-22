@@ -185,42 +185,45 @@ totalTimeString = fcn_DebugTools_printTimeStringFromSeconds(totalTime);
 fprintf(1,'Estimated copy time, assuming all need to be copied: %s \n',totalTimeString);
 fprintf(1,'Total number of listings to transfer: %.0d files and/or folders\n',Nlistings);
 
+flag_keepGoing = 1;
 if totalTime>2
-	warning('This is a large total time. Press a key to continue!');
-	pause;
+	warning('This is a large total time. User must manually uncomment to continue!');
+    flag_keepGoing = 0;
 end
 
-%% Copy remote to local drive
+if 1==flag_keepGoing
 
-for ith_listing = 1:Nlistings 
-	URLtoImport = listingsToDownload{ith_listing,1};
-	bytesToCopy = listingsToDownload{ith_listing,4};
-	if bytesToCopy>largeFileLimit
-		fprintf(1,'Operation %.0d of %.0d, Size: %.3f MB is too large, skipping %s\n', ith_listing, Nlistings, bytesToCopy/1E6, URLtoImport);
-    else
-        if 0==bytesToCopy
-    		fprintf(1,'Operation %.0d of %.0d, folder or zero-size file creation...',ith_listing, Nlistings);
+    %% Copy remote to local drive
+
+    for ith_listing = 1:Nlistings
+    	URLtoImport = listingsToDownload{ith_listing,1};
+    	bytesToCopy = listingsToDownload{ith_listing,4};
+    	if bytesToCopy>largeFileLimit
+    		fprintf(1,'Operation %.0d of %.0d, Size: %.3f MB is too large, skipping %s\n', ith_listing, Nlistings, bytesToCopy/1E6, URLtoImport);
         else
-    		fprintf(1,'Operation %.0d of %.0d, Size: %.3f MB is being copied...',ith_listing, Nlistings, bytesToCopy/1E6);
-        end
+            if 0==bytesToCopy
+        		fprintf(1,'Operation %.0d of %.0d, folder or zero-size file creation...',ith_listing, Nlistings);
+            else
+        		fprintf(1,'Operation %.0d of %.0d, Size: %.3f MB is being copied...',ith_listing, Nlistings, bytesToCopy/1E6);
+            end
 
-        % Call the function
-		estimatedSeconds = bytesToCopy/estimatedBytesPerSecond;
-        expectedBytes = bytesToCopy;
-		PASDA_URL_Prefix = [];
-		rootOfLargeDataPath = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
-		saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (expectedBytes), (PASDA_URL_Prefix), (rootOfLargeDataPath), (-1));
+            % Call the function
+    		estimatedSeconds = bytesToCopy/estimatedBytesPerSecond;
+            expectedBytes = bytesToCopy;
+    		PASDA_URL_Prefix = [];
+    		rootOfLargeDataPath = 'G:\GitHubMirror\IVSG\FieldDataCollection\RoadSegments\DEMImport\LargeData\download';
+    		saveTime = fcn_DEMImport_importZipFromURL(URLtoImport, (estimatedSeconds), (expectedBytes), (PASDA_URL_Prefix), (rootOfLargeDataPath), (-1));
 
-		% If the file is large, update copy estimate
-		if bytesToCopy>1E6 && saveTime>0
-			estimatedBytesPerSecond = (bytesToCopy+overhead)/saveTime;
-		elseif bytesToCopy==0
-			overhead = saveTime;
-		end
+    		% If the file is large, update copy estimate
+    		if bytesToCopy>1E6 && saveTime>0
+    			estimatedBytesPerSecond = (bytesToCopy+overhead)/saveTime;
+    		elseif bytesToCopy==0
+    			overhead = saveTime;
+    		end
 
-	end
+    	end
+    end
 end
-
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

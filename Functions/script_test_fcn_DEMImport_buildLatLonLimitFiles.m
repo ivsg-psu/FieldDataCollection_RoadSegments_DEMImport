@@ -76,34 +76,34 @@ flagIgnoreLoadFiles = 1; % 1 means to FORCE load of DEM data, ignoring prior MAT
 % Call the function
 warning('backtrace','on');
 warning('This function takes a VERY long time to run (hours). The user must uncomment to run it.')
-if 1==1
-	[LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(...
+if 1==0
+    [LatLonLimits,zipPaths, FtLimits] = fcn_DEMImport_buildLatLonLimitFiles(...
         rootPathName, (flagIgnoreLoadFiles), (figNum));
+
+
+    sgtitle(titleString, 'Interpreter','none');
+
+    % Check variable types
+    assert(isnumeric(LatLonLimits));
+    assert(iscell(zipPaths));
+    assert(isnumeric(FtLimits));
+
+    % Check variable sizes
+    Nfiles = size(LatLonLimits,1);
+    assert(isequal(Nfiles,size(LatLonLimits,1)));
+    assert(isequal(Nfiles,size(zipPaths,1)));
+    assert(isequal(Nfiles,size(FtLimits,1)));
+    assert(isequal(4,size(LatLonLimits,2)));
+    assert(isequal(1,size(zipPaths,2)));
+    assert(isequal(4,size(FtLimits,2)));
+
+    % Check variable values
+    % Not possible to check
+
+    % Make sure plot opened up
+    assert(isequal(get(gcf,'Number'),figNum));
+
 end
-
-sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(isnumeric(LatLonLimits));
-assert(iscell(zipPaths));
-assert(isnumeric(FtLimits));
-
-% Check variable sizes
-Nfiles = size(LatLonLimits,1);
-assert(isequal(Nfiles,size(LatLonLimits,1))); 
-assert(isequal(Nfiles,size(zipPaths,1))); 
-assert(isequal(Nfiles,size(FtLimits,1))); 
-assert(isequal(4,size(LatLonLimits,2))); 
-assert(isequal(1,size(zipPaths,2))); 
-assert(isequal(4,size(FtLimits,2))); 
-
-% Check variable values
-% Not possible to check
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),figNum));
-
-
 
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

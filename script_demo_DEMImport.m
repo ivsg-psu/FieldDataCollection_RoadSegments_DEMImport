@@ -207,6 +207,20 @@
 % - In fcn_DEMImport_queryElevationsFromMatchedTiles
 %   % * Fixed queryMode in call to
 %   %   % fcn_DEMImport_queryElevationsFromSingleTile 
+%
+% 2026_04_20 by Sean Brennan, sbrennan@psu.edu
+%  - In script_test_fcn_DEMImport_queryElevations
+%    % * Fixed bug with variable loading not working
+%
+% 2026_04_22 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Supressed printing if figNum is empty
+%   % * Supressed disp of results if figNum is given
+% - In fcn_DEMImport_queryElevationsFromSingleTile
+%   % * Shut off printing if data outside of DEM bounds, except in debug
+%   %   % mode
+%
+% (new release)
 
 % TO-DO:
 %
@@ -217,9 +231,7 @@
 %   do a query over a location where there is no limit definition files.
 %
 % 2026_04_13 by Sean Brennan, sbrennan@psu.edu
-% - In fcn_DEMImport_queryElevationsFromMatchedTiles
-%   % * The optional inputs are ONLY filled if not in fast mode. This is a
-%   %   % bug
+% - In script_test_fcn_DEMImport_queryElevationsFromMatchedTiles
 %   % * The test script is not in standard form (variable type, then size,
 %   %   % then values). Need to fix this.
 % - In fcn_DEMImport_selectEntriesByBoundingBox
@@ -237,7 +249,10 @@
 %   % * If user selects 'first' as method, it still seems to loop through
 %   %   % ALL the DEM files, which can be VERY slow. Needs to only use first
 %   %   % valid DEM and then stop looping
-
+%
+% 2026_04_22 by Sean Brennan, sbrennan@psu.edu
+% - In fcn_DEMImport_queryElevationsFromMatchedTiles
+%   % * Need some type of graphical output, not print statements
 
 
 %% Make sure we are running out of root directory

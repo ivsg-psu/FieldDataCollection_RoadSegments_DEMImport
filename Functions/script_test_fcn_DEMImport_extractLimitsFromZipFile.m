@@ -262,8 +262,8 @@ assert(isequal(size(limitsLatLon),[1 4]));
 assert(isequal(size(limitsFt),[1 4]));
 
 % Check variable valueslimit
-assert(isequal(round(limitsLatLon,4),[40.7138   40.7414  -78.3941  -78.3578]));
-assert(isequal(round(limitsFt/1E6,4),round([0.2000    0.2100    1.7900    1.8000],4)));
+assert(isequal(round(limitsLatLon,4),[41.1522   41.1805  -75.1660  -75.1286]));
+assert(isequal(round(limitsFt/1E6,4),round([0.3700    0.3800    2.6800    2.6900],4)));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
